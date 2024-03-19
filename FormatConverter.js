@@ -319,7 +319,7 @@ function ShortToLong_Format(shortformatOG){
             }
         }
 
-        // win condition
+        // win condition (has to be at least 3 letters long)
         if(/^(\(?[a-zA-z][a-zA-z][a-zA-z].*)$/.test(string)){
             if (!longformat["gameRules"]){
                 longformat["gameRules"] = {};
@@ -393,7 +393,7 @@ function ShortToLong_Format(shortformatOG){
         }
 
         //moves - conversion stops here
-        if(/^(([0-9]+\..*)|([a-zA-Z]*-?[0-9]+,-?[0-9]+[^|.0-9]*(x|>)+.*))$/.test(string)){
+        if(/^(([0-9]+\..*)|([a-zA-Z]*-?[0-9]+,-?[0-9]+[^\|\.0-9]*(x|>)+.*))$/.test(string)){
             let shortmoves = (string + "  "+ shortformat).trimEnd();
             longformat["moves"] = [];
 
@@ -407,7 +407,7 @@ function ShortToLong_Format(shortformatOG){
                 }
                 shortmoves = shortmoves.slice(0,start_index) + shortmoves.slice(end_index+1);
             }
-            shortmoves = shortmoves.match(/[a-zA-Z]*-?[0-9]+,-?[0-9]+[^\|.0-9]*(x|>)+[^\|.0-9]*-?[0-9]+,-?[0-9]+[^\|.0-9]*/g);
+            shortmoves = shortmoves.match(/[a-zA-Z]*-?[0-9]+,-?[0-9]+[^\|\.0-9]*(x|>)+[^\|\.0-9]*-?[0-9]+,-?[0-9]+[^\|\.0-9]*/g);
 
             if (!shortmoves){
                 delete longformat["moves"];
