@@ -25,7 +25,8 @@ From here on, we distinguish between two notation formats:
     "promotionRanks":[1,8],
     "promotionsAllowed":{"white":["queens","rooks","bishops","knights"],"black":["queens","rooks","bishops","knights"]},
     "winConditions":{"white":["checkmate"],"black":["checkmate"]},
-    "slideLimit": "Infinity"},
+    "slideLimit": "Infinity",
+    "cannotPassTurn": "true"},
 "specialRights":{"1,2":true,"2,2":true,"3,2":true,"4,2":true,"5,2":true,"6,2":true,"7,2":true,"8,2":true,"1,7":true,"2,7":true,"3,7":true,"4,7":true,"5,7":true,"6,7":true,"7,7":true,"8,7":true,"1,1":true,"8,1":true,"1,8":true,"8,8":true,"5,1":true,"5,8":true},
 "startingPosition":{"1,2":"pawnsW","2,2":"pawnsW","3,2":"pawnsW","4,2":"pawnsW","5,2":"pawnsW","6,2":"pawnsW","7,2":"pawnsW","8,2":"pawnsW","1,7":"pawnsB","2,7":"pawnsB","3,7":"pawnsB","4,7":"pawnsB","5,7":"pawnsB","6,7":"pawnsB","7,7":"pawnsB","8,7":"pawnsB","1,1":"rooksW","8,1":"rooksW","1,8":"rooksB","8,8":"rooksB","2,1":"knightsW","7,1":"knightsW","2,8":"knightsB","7,8":"knightsB","3,1":"bishopsW","6,1":"bishopsW","3,8":"bishopsB","6,8":"bishopsB","4,1":"queensW","4,8":"queensB","5,1":"kingsW","5,8":"kingsB"},
 "moves":[
@@ -54,10 +55,10 @@ From here on, we distinguish between two notation formats:
 ```
 The formatting of all optional arguments above is self-evident. `startingPosition` contains the piece list, while `specialRights` encodes the `+` signs corresponding to pawn double move and castling rights.
 
-Finally, `moves` is a list of moves. Every move specifies the moved piece with `type` and the coordinates with `startCoords` and `endCoords`. If a piece is captured, this is specified with `captured`. If this happened en passant, this is specified with `enpassant` (`-1` for white, `1` for black). Finally, if the king castles, this is specified with `castle`, containing the x-direction of the king move and the coordinates of the piece he castled with.
+Finally, `moves` is a list of moves. Every move specifies the moved piece with `type` and the move's coordinates with `startCoords` and `endCoords`. If a piece is captured, this is specified with `captured`. If this happened en passant, this is specified with `enpassant` (`-1` for a white move, `1` for black for a black move). Finally, if the king castles, this is specified with `castle`, containing the x-direction of the king move and the coordinates of the piece he castled with.
 
 ## Functions
 The program has the following functions:
 - `LongToShort_Format(longformat, compact_moves = false)` : Given a JSON, this method returns the corresponding position or game in short notation as a string by transforming every JSON entry into its corresponding representation in short format. The optional argument `compact_moves` specifies whether the moves outputted are in compact format or expanded.
-- `function ShortToLong_Format(shortformat)` : Given a string, this method returns an equivalent JSON in long format. The method recognizes all optional arguments in the string with regular expressions, i.e. their order does not matter as long as they are formatted correctly. If moves are included at the end of the string, the method will reconstruct all flags in the long format (except check and checkmate) from the starting position and move list. Inputting illegal moves may crash the program.
+- `function ShortToLong_Format(shortformat)` : Given a string, this method returns an equivalent JSON in long format. The method recognizes all optional arguments in the string with regular expressions, i.e. their order does not matter as long as they are formatted correctly. If moves are included at the end of the string, the method will reconstruct all flags in the long format (except for check and checkmate) from the starting position and move list. Inputting illegal moves may crash the program.
 - `function GameToPosition(longformat, halfmoves = 0)` : Given the JSON of a game, this method will return a JSON corresponding to a single position from the game, which is at a certain number of halfmoves after the start. This number is specified by the optional argument `halfmoves`. Setting it to `0` will yield the starting position, while setting it to `Infinity` will yield the final position of the game.
