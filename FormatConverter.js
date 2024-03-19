@@ -653,7 +653,8 @@ console.log("Converted back to long format:\n\n" + JSON.stringify(gameExampleBac
 
 // Position after 21 halfmoves:
 let position = GameToPosition(gameExample,21);
-console.log("Position after 21 half moves:\n\n" + JSON.stringify(position));
+console.log("Position after 21 half moves in long format:\n\n" + JSON.stringify(position));
+// console.log("Position after 21 half moves in short format:\n\n" + LongToShort_Format(position));
 
 
 // String test:

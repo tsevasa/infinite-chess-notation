@@ -96,5 +96,5 @@ Compact version:
 
 The position just before the final move by Black looks like this:
 ```
-b 8,3 0/100 11 (1|8) P1,2+|P2,2+|P3,2+|P5,2+|P6,2+|P7,2+|p5,7+|p6,7+|p8,7+|R1,1+|R8,1+|N2,1|N7,1|B3,1|B6,1|b3,8|Q4,1|p4,6|b2,-2|K4,2|n6,6|q0,4|k7,7|P8,4
+b 8,3 0/100 11 (1|8) P1,2+|P2,2+|P3,2+|P5,2+|P6,2+|P7,2+|p5,7+|p6,7+|k7,7|p8,7+|R1,1+|R8,1+|N2,1|N7,1|B3,1|B6,1|b3,8|Q4,1|p4,6|b2,-2|K4,2|n6,6|r6,8|q0,4|P8,4
 ```
