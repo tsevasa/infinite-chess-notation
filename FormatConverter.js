@@ -570,6 +570,8 @@ function GameToPosition(longformat, halfmoves = 0){
     let enpassantcoordinates = (ret["enpassant"] ? ret["enpassant"] : "");
     for (let i = 0; i < Math.min(halfmoves, ret["moves"].length); i++){
         let move = ret["moves"][i];
+
+        // update fullmove counter
         if (ret["turn"]){
             if (ret["turn"] == "black" && ret["fullMove"]){
                 ret["fullMove"] += 1;
@@ -582,6 +584,7 @@ function GameToPosition(longformat, halfmoves = 0){
         let startString = move["startCoords"][0].toString() + "," + move["startCoords"][1].toString();
         let endString = move["endCoords"][0].toString() + "," + move["endCoords"][1].toString();
 
+        // update coordinates in starting position
         delete ret["startingPosition"][endString];
         ret["startingPosition"][endString] = structuredClone(ret["startingPosition"][startString]);
         delete ret["startingPosition"][startString];
@@ -590,6 +593,7 @@ function GameToPosition(longformat, halfmoves = 0){
             delete ret["specialRights"][endString];
         }
 
+        // update move rule
         if (ret["moveRule"]){
             let slashindex = ret["moveRule"].indexOf("/");
             if(move["captured"] || move["type"].slice(0, -1) == "pawns"){
@@ -599,17 +603,30 @@ function GameToPosition(longformat, halfmoves = 0){
             }
         }
 
+        // delete captured piece en passant
         if(move["enpassant"]){
             delete ret["startingPosition"][enpassantcoordinates];
             delete ret["specialRights"][enpassantcoordinates];
         }
 
+        // update en passant
         if (move["type"].slice(0, -1) == "pawns" && Math.abs(move["startCoords"][1] - move["endCoords"][1]) > 1 ){
             ret["enpassant"] = move["endCoords"][0].toString() + "," + Math.round(0.5*(move["startCoords"][1] + move["endCoords"][1])).toString();
         } else{
             delete ret["enpassant"];
         }
 
+        // update coords of castled piece
+        if (move["castle"]){
+            let castleString = move["castle"]["coord"][0].toString() + "," + move["castle"]["coord"][1].toString();
+            ret["startingPosition"][(parseInt(move["endCoords"][0])-move["castle"]["dir"]).toString() + "," + move["endCoords"][1].toString()] = structuredClone(ret["startingPosition"][castleString]);
+            delete ret["startingPosition"][castleString];
+            if (ret["specialRights"]){
+                delete ret["specialRights"][castleString];
+            }
+        }
+
+        // save move coords for potential en passant
         enpassantcoordinates = endString;
     }
     delete ret["moves"];
