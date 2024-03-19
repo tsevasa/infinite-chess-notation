@@ -62,3 +62,7 @@ The program has the following functions:
 - `LongToShort_Format(longformat, compact_moves = false)` : Given a JSON, this method returns the corresponding position or game in short notation as a string by transforming every JSON entry into its corresponding representation in short format. The optional argument `compact_moves` specifies whether the moves outputted are in compact format or expanded.
 - `function ShortToLong_Format(shortformat)` : Given a string, this method returns an equivalent JSON in long format. The method recognizes all optional arguments in the string with regular expressions, i.e. their order does not matter as long as they are formatted correctly. If moves are included at the end of the string, the method will reconstruct all flags in the long format (except for check and checkmate) from the starting position and move list. Inputting illegal moves may crash the program.
 - `function GameToPosition(longformat, halfmoves = 0)` : Given the JSON of a game, this method will return a JSON corresponding to a single position from the game, which is at a certain number of halfmoves after the start. This number is specified by the optional argument `halfmoves`. Setting it to `0` will yield the starting position, while setting it to `Infinity` will yield the final position of the game.
+
+At the start of the program, you can find the piece name dictionary.
+
+At the end of the program, you can find some example uses of these functions, which were used to generate the game in [README.md](README.md).
