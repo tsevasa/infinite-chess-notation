@@ -613,6 +613,7 @@ function GameToPosition(longformat, halfmoves = 0){
         enpassantcoordinates = endString;
     }
     delete ret["moves"];
+    ret["moves"] = [];
     return ret;
 }
 
@@ -633,8 +634,6 @@ console.log("Converted back to long format:\n\n" + JSON.stringify(gameExampleBac
 // Position after 21 half moves:
 let position = GameToPosition(gameExample,21);
 console.log("Position after 21 half moves:\n\n" + JSON.stringify(position));
-
-
 
 
 // String test:
