@@ -6,7 +6,7 @@ In the [mathematical literature on infinite chess](https://www.emis.de/journals/
 
 ## Included converter
 
-This repository includes a converter, which can transform the notation at hand into a JSON format more suitable for computer processing. For information on how to use it, check [Usage.md](Usage.md).
+This repository includes a converter, which can transform the notation at hand into a JSON format more suitable for computer processing, along with some other useful general purpose functions. For information on how to use the program and that JSON format, check [Usage.md](Usage.md).
 
 ## Coordinates, Pieces and Moves
 
@@ -33,9 +33,9 @@ K3,4|Q3,5|P3,7|R9,4|k-2,-10|q-2,-9|r-3,4
 
 The piece list can be enhanced with these custom rules:
 - If a pawn has the ability to make a double move, a `+` is added behind its coordinates in the piece list, e.g. `P3,7+`. Naturally, this ability is lost after the pawn makes a move.
-- If the king has castling rights, then he has a `+` behind his coordinates. He can castle with any non-pawn piece having the same y-coordinate as him and also having a `+` behind its coordinates. For example, a `K3,3+` can castle with a `R10,3+` by moving two squares to the right, if no other pieces are inbetween, he is not check and `4,3` is not attacked by Black. Naturally, the `+` specification is lost for any piece making a move.
+- If a king has castling rights, then he has a `+` behind his coordinates. He can castle with any non-pawn piece having the same y-coordinate as him and also having a `+` behind its coordinates. For example, a `K3,3+` can castle with a `R10,3+` by moving two squares to the right, if no other pieces are between him and the rook, if he is not in check and if `4,3` and `5,3` are not threatened by Black. Naturally, the `+` specification is lost for any piece making a move.
 
-Now comes a long list of optional arguments that can be added in front of the piece list in order to accommodate custom rules and more information:
+Now we explain the long list of optional arguments that can be added in front of the piece list in order to accommodate custom rules and more information on a given position:
 - `w` or `b` in front symbolises whose turn it is in a position. If omitted, it defaults to `w`.
 - A square `a,b` in front symbolises en passant rights in the current position, e.g. if the last move played was `P1,3>1,5`, then the current position has en passant rights on square `1,4`. If omitted, no en passant is possible.
 - `N/M` with nonnegative integers `N` and `M` symbolises the state of the X-move rule counter. Here, `N` is the number of halfmoves since the last pawn move or capture, while `M` determines the X-move rule of the game (i.e. the number of halfmoves allowed to be played without pawn moves or captures until the players may claim a draw). If omitted, there is no X-move rule.
