@@ -585,8 +585,11 @@ function GameToPosition(longformat, halfmoves = 0){
         let endString = move["endCoords"][0].toString() + "," + move["endCoords"][1].toString();
 
         // update coordinates in starting position
-        delete ret["startingPosition"][endString];
-        ret["startingPosition"][endString] = structuredClone(ret["startingPosition"][startString]);
+        if (move["promotion"]){
+            ret["startingPosition"][endString] = structuredClone(move["promotion"]);
+        } else{
+            ret["startingPosition"][endString] = structuredClone(ret["startingPosition"][startString]);
+        }
         delete ret["startingPosition"][startString];
         if (ret["specialRights"]){
             delete ret["specialRights"][startString];
@@ -648,7 +651,7 @@ console.log("Game in short format with compact moves:\n\n" + outputCompact + "\n
 let gameExampleBackToLong = ShortToLong_Format(outputNice);
 console.log("Converted back to long format:\n\n" + JSON.stringify(gameExampleBackToLong)+ "\n");
 
-// Position after 21 half moves:
+// Position after 21 halfmoves:
 let position = GameToPosition(gameExample,21);
 console.log("Position after 21 half moves:\n\n" + JSON.stringify(position));
 
