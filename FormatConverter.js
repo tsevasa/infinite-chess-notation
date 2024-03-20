@@ -307,7 +307,7 @@ function ShortToLong_Format(shortformatOG){
 
         // full move counter
         if(!longformat["fullMove"] && /^([0-9]+)$/.test(string)){
-            longformat["fullMove"] = string;
+            longformat["fullMove"] = parseInt(string);
             continue;
         }
 

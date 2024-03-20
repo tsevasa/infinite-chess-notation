@@ -20,7 +20,7 @@ From here on, we distinguish between two notation formats:
     "Condition":"checkmate"},
 "turn":"white",
 "moveRule":"0/100",
-"fullMove":"1",
+"fullMove":1,
 "gameRules":{
     "promotionRanks":[8,1],
     "promotionsAllowed":{"white":["queens","rooks","bishops","knights"],"black":["queens","rooks","bishops","knights"]},
