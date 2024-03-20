@@ -683,4 +683,4 @@ console.log("Position after 21 half moves in long format:\n\n" + JSON.stringify(
 
 
 // String test:
-// console.log('\n' + JSON.stringify(ShortToLong_Format(" 3,4  3 w 3232098/2319080123213 K3,3+ {\"asd dssda\": 2332, \"nest\" : { \"nes t2\": \"233 22\" }} [asa: adsdsa] checkmate,asd   ")));
+// console.log('\n' + JSON.stringify(ShortToLong_Format(' 3,4  3 w 3232098/2319080123213 K3,3+ {\"asd dssda\": 2332, "nest" : { "nes t2": "233 22" }} [asa: adsdsa] checkmate,asd   ')));

@@ -42,7 +42,7 @@ Now we explain the long list of optional arguments that can be added in front of
 - A single nonnegative integer `N` determines the fullmove counter of the current position. It starts at `1` in every game and gets incremented after every black move. If omitted, it is assumed to be `1`.
 - An entry of the form `(8;Q,R,N|1;n,b,am)` determines the promotion ranks of the current position for the two players, separated by `|`. In this example, White may promote any pawn reaching y-coordinate 8 to a queen, rook or knight, while Black may promote any pawn reaching y-coordinate 1 to a knight, bishop or amazon. If the pieces for a given player are omitted, e.g. `(3|-4;q,r)`, then he may promote to the usual choice of queen, rook, bishop or knight. If the entry of a player is omitted entirely, e.g. `(|-4;q)`, then he has no promotion rank. If this entire argument is omitted, there are no promotion ranks for either player.
 - There is an optional win condition argument, which is `checkmate` by default. It can be changed to completely overhaul the goal of the players in the game, e.g. to `allpiecescaptured` or `threecheck`. An argument of the form `(checkmate|checkmate,allpiecescaptured)` allows for multiple different win conditions for the two players. In this example, White can win by checkmating Black, while Black can win by either checkmate or allpiecescaptured.
-- Any additional optional properties of the position can be included in JSON format in { } brackets in the form `{slideLimit: 7, cannotPassTurn: true}`.
+- Any additional optional properties of the position can be included in JSON format in { } brackets in the form `{"slideLimit": 7, "cannotPassTurn": true}`.
 
 In total, the classical starting position of normal chess embedded into the infinite board with the same rules as finite chess takes the form
 ```
@@ -73,7 +73,7 @@ Long version:
 [Result: 0-1]
 [Condition: checkmate]
 
-w 0/100 1 (8;Q,R,B,N|1;q,r,b,n) checkmate {slideLimit: Infinity, cannotPassTurn: true} P1,2+|P2,2+|P3,2+|P4,2+|P5,2+|P6,2+|P7,2+|P8,2+|p1,7+|p2,7+|p3,7+|p4,7+|p5,7+|p6,7+|p7,7+|p8,7+|R1,1+|R8,1+|r1,8+|r8,8+|N2,1|N7,1|n2,8|n7,8|B3,1|B6,1|b3,8|b6,8|Q4,1|q4,8|K5,1+|k5,8+
+w 0/100 1 (8;Q,R,B,N|1;q,r,b,n) checkmate {"slideLimit": "Infinity", "cannotPassTurn": true} P1,2+|P2,2+|P3,2+|P4,2+|P5,2+|P6,2+|P7,2+|P8,2+|p1,7+|p2,7+|p3,7+|p4,7+|p5,7+|p6,7+|p7,7+|p8,7+|R1,1+|R8,1+|r1,8+|r8,8+|N2,1|N7,1|n2,8|n7,8|B3,1|B6,1|b3,8|b6,8|Q4,1|q4,8|K5,1+|k5,8+
 
 1. P4,2 > 4,4  | p4,7 > 4,6
 2. P4,4 > 4,5  | p3,7 > 3,5
