@@ -45,6 +45,14 @@ function ShortToLong_Piece(shortpiece){
     return invertedpieceDictionary[shortpiece];
 }
 
+function isJson(str) {
+    try {
+        JSON.parse(str);
+    } catch (e) {
+        return false;
+    }
+    return true;
+}
 
 /**
  * Converts a gamefile in JSON format to Infinite Chess Notation.
@@ -276,6 +284,7 @@ function ShortToLong_Format(shortformatOG){
             index = shortformat.length;
         }
         let string = shortformat.slice(0,index);
+        let removed_char = shortformat.slice(index,index+1);
         shortformat = shortformat.slice(index+1);
 
         // move turn
@@ -357,14 +366,12 @@ function ShortToLong_Format(shortformatOG){
 
         // Other gameRules are included in the FEN. Parse them into an object
         if (string[0] === '{') {
-            string += " ";
+            string += removed_char;
             while (true){
-                let num_opening_brackets = (/[\{]/.test(string) ? string.match(/[\{]/g).length : 0);
-                let num_closing_brackets = (/[\}]/.test(string) ? string.match(/[\}]/g).length : 0);
-                if (num_opening_brackets == num_closing_brackets){
+                if (isJson(string)){
                     break;
-                } else if (string == ""){
-                    console.error("Mismatched number of {} brackets in optional arguments");
+                } else if (shortformat == ""){
+                    console.error("Extra optional arguments not in JSON format");
                     return {};
                 }
                 let index_loc = shortformat.search(/\s/);
@@ -683,4 +690,4 @@ console.log("Position after 21 half moves in long format:\n\n" + JSON.stringify(
 
 
 // String test:
-// console.log('\n' + JSON.stringify(ShortToLong_Format(' 3,4  3 w 3232098/2319080123213 K3,3+ {\"asd dssda\": 2332, "nest" : { "nes t2": "233 22" }} [asa: adsdsa] checkmate,asd   ')));
+console.log('\nTest:\n\n' + JSON.stringify(ShortToLong_Format(' 3,4  3 w 3232098/2319080123213 K3,3+ {\"asdds}sd a\": 2332, "{nest}" : { "nes t2": "233 22" } } [asa: adsdsa] checkmate,asd   ')));
