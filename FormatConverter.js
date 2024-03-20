@@ -165,10 +165,8 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
     let added_extras = false;
     for (let key in longformat["gameRules"]){
         if (key != "promotionRanks" && key != "promotionsAllowed" && key != "winConditions"){
-            if (!(key == "slideLimit" && longformat["gameRules"][key] == "Infinity")){
-                shortformat += key.toString() + ": " + longformat["gameRules"][key].toString() + ", ";
-                added_extras = true;
-            }
+            shortformat += key.toString() + ": " + longformat["gameRules"][key].toString() + ", ";
+            added_extras = true;
         }
     }
     shortformat = shortformat.slice(0, -1);
