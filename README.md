@@ -22,7 +22,7 @@ While this is already enough to uniquely identify any chess move and to communic
 - `+` can be appended if the move puts the opponent's king in check, while `#` can be appended if the move checkmates the opponent's king.
 - The move number in front can be included, as well as spaces, special symbols (=!?) and comments in {} brackets at the end, which can all be freely added to comment a move.
 
-In total, a move can look like `12. P-5,6x-6,7 =R+ !? {Interesting underpromotion}` or `1 ... q-8,2x-6,0 # {Game over}`, for example.
+In total, a move can look like `12. P-5,6x-6,7 =R+ !? {Interesting underpromotion}` or `1. ... q-8,2x-6,0 # {Game over}`, for example.
 
 ## Describing positions
 
