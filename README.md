@@ -1,6 +1,6 @@
 # Universal Infinite Chess Notation and Interface
 
-This is an attempt to standardize the notation around [infinite chess](https://en.wikipedia.org/wiki/Infinite_chess) positions and games. Specifically, the notation at hand allows for the compact description of arbitrary infinite chess positions with finitely many pieces and is meant to be an extension of [PGN](https://en.wikipedia.org/wiki/Portable_Game_Notation) for infinite chess. The notation is simultaneously meant to be easy to read for a human as well as for a computer.
+This is an attempt to standardize the notation around [infinite chess](https://en.wikipedia.org/wiki/Infinite_chess) positions and games. Specifically, the notation at hand allows for the compact description of arbitrary infinite chess positions and games with finitely many pieces and is meant to be an extension of [PGN](https://en.wikipedia.org/wiki/Portable_Game_Notation) for infinite chess. The notation is simultaneously meant to be easy to read for humans as well as for computers.
 
 In the [mathematical literature on infinite chess](https://www.emis.de/journals/INTEGERS/papers/og2/og2.pdf), the concepts of double pawn moves, promotion, en passant, castling and the fifty-move rule are often discarded. However, many popular variants of [infinite chess played by humans](https://www.infinitechess.org/) feature all these rules, next to fairy pieces and further unorthodox game modes. With this dichotomy in mind, the notation at hand was explicitly developed with the aim of covering all possible rule combinations. This is achieved by allowing for all sorts of optional arguments at the start of a position string, modifying the implied game rules if included.
 
@@ -20,7 +20,7 @@ While this is already enough to uniquely identify any chess move and to communic
 - The name of the moved piece can be added to the start of the move.
 - `>` can be replaced by `x` if the move was a capture.
 - `+` can be appended if the move puts the opponent's king in check, while `#` can be appended if the move checkmates the opponent's king.
-- The move number in front can be included, as well as spaces, special symbols (=,!,?) and comments in {} brackets at the end that can be freely added to comment a move.
+- The move number in front can be included, as well as spaces, special symbols (=!?) and comments in {} brackets at the end, which can all be freely added to comment a move.
 
 In total, a move can look like `12. P-5,6x-6,7 =R+ !? {Interesting underpromotion}` or `1 ... q-8,2x-6,0 # {Game over}`, for example.
 
