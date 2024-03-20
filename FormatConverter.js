@@ -314,7 +314,7 @@ function ShortToLong_Format(shortformatOG){
                 longformat["gameRules"]["promotionsAllowed"] = {};
                 for (let i = 0; i < 2; i++){
                     let color = (i==0 ? "white" : "black");
-                    if (string[i] != ""){
+                    if (string[i] != "" && string[i] != null){
                         let promotionLine = (string[i].indexOf(";") == -1 ? parseInt(string[i]) : parseInt(string[i].split(";")[0]));
                         longformat["gameRules"]["promotionRanks"].push(promotionLine);
                         string[i] = string[i].split(";");
@@ -334,7 +334,7 @@ function ShortToLong_Format(shortformatOG){
             }
         }
 
-        // win condition (has to start with a letter)
+        // win condition (has to start with a letter or bracket+letter)
         if(/^(\(?[a-zA-z].*)$/.test(string)){
             if (!longformat["gameRules"]){
                 longformat["gameRules"] = {};
