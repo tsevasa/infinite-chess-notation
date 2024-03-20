@@ -18,7 +18,7 @@ From here on, we distinguish between two notation formats:
     "Date":"2024/03/17 13:42:06",
     "Result":"0-1",
     "Condition":"checkmate"},
-"turn":"w",
+"turn":"white",
 "moveRule":"0/100",
 "fullMove":"1",
 "gameRules":{
@@ -59,7 +59,7 @@ Finally, `moves` gives the list of moves. Every move specifies the moved piece w
 
 ## Functions
 The program has the following functions:
-- `LongToShort_Format(longformat, compact_moves = false)` : Given a JSON, this method returns the corresponding position or game in short notation as a string by transforming every JSON entry into its corresponding representation in short format and concatenating them. The optional argument `compact_moves` specifies whether the moves outputted are in compact format or expanded.
+- `LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true)` : Given a JSON, this method returns the corresponding position or game in short notation as a string by transforming every JSON entry into its corresponding representation in short format and concatenating them. The optional argument `compact_moves` specifies whether the moves outputted are in compact format or expanded (0: least compact, 1: moderately compact, 2: most compact). The optional argument `make_new_lines` specifies whether line breaks should be used at all in the string.
 - `function ShortToLong_Format(shortformat)` : Given a string, this method returns an equivalent JSON in long format. The method recognizes all optional arguments in the string with regular expressions, i.e. their order does not matter as long as they are formatted correctly. If moves are included at the end of the string, the method will reconstruct all flags in the `moves` entry of the long format from the starting position and move list (except for check and checkmate flags). Inputting illegal moves may thus crash the program.
 - `function GameToPosition(longformat, halfmoves = 0)` : Given the JSON of a game, this method will return a JSON corresponding to a single position from the game, which is at a certain number of halfmoves after the start. This number is specified by the optional argument `halfmoves`. Setting it to `0` will yield the starting position JSON, while setting it to `Infinity` will yield the final position of the game as a JSON.
 

@@ -20,9 +20,9 @@ While this is already enough to uniquely identify any chess move and to communic
 - The name of the moved piece can be added to the start of the move.
 - `>` can be replaced by `x` if the move was a capture.
 - `+` can be appended if the move puts the opponent's king in check, while `#` can be appended if the move checkmates the opponent's king.
-- The move number in front can be included, as well as spaces, exclamation marks, question marks and comments in {} brackets at the end that can be freely added to comment a move.
+- The move number in front can be included, as well as spaces, special symbols (=,!,?) and comments in {} brackets at the end that can be freely added to comment a move.
 
-In total, a move can look like `12. P-5,6x-6,7R+ !? {Interesting underpromotion}` or `1 ... q-8,2x-6,0 # {Game over}`, for example.
+In total, a move can look like `12. P-5,6x-6,7 =R+ !? {Interesting underpromotion}` or `1 ... q-8,2x-6,0 # {Game over}`, for example.
 
 ## Describing positions
 
@@ -79,7 +79,7 @@ w 0/100 1 (1;Q,R,B,N|8;q,r,b,n) checkmate {slideLimit: Infinity, cannotPassTurn:
 2. P4,4 > 4,5  | p3,7 > 3,5
 3. P4,5 x 3,6 {White captures en passant} | b6,8 > 3,11 
 4. P3,6 x 2,7  | b3,11 > -4,4 ?
-5. P2,7 x 1,8 Q | b-4,4 > 2,-2 +
+5. P2,7 x 1,8 =Q | b-4,4 > 2,-2 +
 6. K5,1 > 4,2  | n7,8 > 6,6
 7. Q1,8 x 2,8  | k5,8 > 7,8 {Castling}
 8. Q2,8 x 1,7  | q4,8 > 0,4

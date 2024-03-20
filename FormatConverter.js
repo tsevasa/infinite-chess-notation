@@ -45,14 +45,23 @@ function ShortToLong_Piece(shortpiece){
     return invertedpieceDictionary[shortpiece];
 }
 
-function LongToShort_Format(longformat, compact_moves = false){
+
+/**
+ * Converts a gamefile in JSON format to Infinite Chess Notation.
+ * @param {object} longformat - The gamefile in JSON format
+ * @param {number} compact_moves - Number between 0-2 for how compact you want the resulting ICN (0 = least compact, 1: moderately compact, 2: most compact)
+ * @param {boolean} make_new_lines - Boolean specifying whether linebreaks should be included in the output string
+ * @returns {string} The ICN of the gamefile as a string
+ */
+function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true){
     let shortformat = "";
+    let whitespace = (make_new_lines ? "\n" : " ");
     // metadata
     for (let key in longformat["metadata"]){
-        shortformat += "[" + key.charAt(0).toUpperCase() + key.slice(1) + ": " + longformat["metadata"][key] + "]" + '\n';
+        shortformat += "[" + key + ": " + longformat["metadata"][key] + "]" + whitespace;
     }
     if (longformat["metadata"]){
-        shortformat += "\n";
+        shortformat += whitespace;
     }
 
     // move turn
@@ -173,63 +182,59 @@ function LongToShort_Format(longformat, compact_moves = false){
     if (longformat["startingPosition"]){
         shortformat = shortformat.slice(0, -1);
         if (longformat["moves"]){
-            shortformat += "\n\n";
+            shortformat += whitespace + whitespace;
         }
     }
 
     // moves
     if (longformat["moves"]){
-        if (compact_moves){
-            for (let i = 0; i < longformat["moves"].length; i++){
-                let longmove = longformat["moves"][i];
-                shortformat += longmove["startCoords"][0].toString()+ "," + longmove["startCoords"][1].toString();
-                shortformat += ">";
-                shortformat += longmove["endCoords"][0].toString()+ "," + longmove["endCoords"][1].toString();
-                if (longmove["promotion"]){
-                    shortformat += LongToShort_Piece(longmove["promotion"]);
-                }
-                shortformat += "|";
+        for (let i = 0; i < longformat["moves"].length; i++){
+            let longmove = longformat["moves"][i];
+            if (next_move == "w" && compact_moves == 0){
+                shortformat += (!make_new_lines && i != 0 ? " " : "");
+                shortformat += fullmove.toString() + ". ";
+            } else if (compact_moves == 0){
+                shortformat += (i == 0 ? fullmove.toString() + ".   ...   | " : " | ");
+            } else {
+                shortformat += (i == 0 ? "" : "|");
             }
-            shortformat = shortformat.slice(0, -1);
-        } else{
-            for (let i = 0; i < longformat["moves"].length; i++){
-                let longmove = longformat["moves"][i];
-                if (next_move == "w"){
-                    shortformat += fullmove.toString() + ". ";
-                } else{
-                    if (i == 0){
-                        shortformat += fullmove.toString() + ".   ...   | ";
-                    } else{
-                        shortformat += " | ";
-                    }
-                }
-                shortformat += LongToShort_Piece(longmove["type"]) + longmove["startCoords"][0].toString()+ "," + longmove["startCoords"][1].toString()+ " ";
-                shortformat += (longmove["captured"] ? "x" : ">");
-                shortformat += " " + longmove["endCoords"][0].toString()+ "," + longmove["endCoords"][1].toString() + " ";
-                if (longmove["promotion"]){
-                    shortformat += LongToShort_Piece(longmove["promotion"]);
-                }
-                if (longmove["mate"]){
-                    shortformat += "\#";
-                } else if (longmove["check"]){
-                    shortformat += "+";
-                }
-                if (next_move == "w"){
-                    next_move = "b";
-                } else{
-                    next_move = "w";
-                    fullmove += 1;
-                    if (i != longformat["moves"].length - 1){
-                        shortformat += "\n";
-                    }
+            shortformat += (compact_moves == 0 || compact_moves == 1 ? LongToShort_Piece(longmove["type"]) : "");
+            shortformat += longmove["startCoords"][0].toString()+ "," + longmove["startCoords"][1].toString();
+            shortformat += (compact_moves == 0 ? " " : "");
+            shortformat += (longmove["captured"] && (compact_moves == 0 || compact_moves == 1) ? "x" : ">");
+            shortformat += (compact_moves == 0 ? " " : "");
+            shortformat += longmove["endCoords"][0].toString()+ "," + longmove["endCoords"][1].toString();
+            shortformat += (compact_moves == 0 ? " " : "");
+            if (longmove["promotion"]){
+                shortformat += (compact_moves == 0 || compact_moves == 1? "=" : "");
+                shortformat += LongToShort_Piece(longmove["promotion"]);
+            }
+            if (longmove["mate"] && (compact_moves == 0 || compact_moves == 1)){
+                shortformat += "\#";
+            } else if (longmove["check"] && (compact_moves == 0 || compact_moves == 1)){
+                shortformat += "+";
+            }
+            shortformat = shortformat.trimEnd();
+            if (next_move == "w"){
+                next_move = "b";
+            } else{
+                next_move = "w";
+                fullmove += 1;
+                if (i != longformat["moves"].length - 1 && compact_moves == 0){
+                    shortformat += (make_new_lines ? "\n" : " |");
                 }
             }
         }
     }
     
-    return shortformat;
+    return shortformat.trimEnd();
 }
 
+/**
+ * Converts a string in Infinite Chess Notation to gamefile in JSON format
+ * @param {string} shortformatOG - A string in ICN
+ * @returns {object} Equivalent gamefile in JSON format
+ */
 function ShortToLong_Format(shortformatOG){
     let longformat = {};
     let shortformat = structuredClone(shortformatOG);
@@ -271,7 +276,7 @@ function ShortToLong_Format(shortformatOG){
 
         // move turn
         if (!longformat["turn"] && /^(w|b)$/.test(string)){
-            longformat["turn"] = string;
+            longformat["turn"] = (string == "b" ? "black" : "white");
             continue;
         }
 
@@ -562,6 +567,12 @@ function ShortToLong_Format(shortformatOG){
     return longformat;
 }
 
+/**
+ * Converts a gamefile in JSON format to single position gamefile in JSON format with deleted "moves" object
+ * @param {object} shortformatOG - Input gamefile in JSON format
+ * @param {number} halfmoves - Number of halfmoves from starting position (Infinity: final position of game)
+ * @returns {object} Output gamefile in JSON format
+ */
 function GameToPosition(longformat, halfmoves = 0){
     if(!longformat["moves"]){
         return longformat;
@@ -639,13 +650,15 @@ function GameToPosition(longformat, halfmoves = 0){
 
 
 
-// Example game converted from long to short format in two different ways
+// Example game converted from long to short format in three different levels of move compactness
 gameExample = 
-{"metadata":{"variant":"Classical","version":"1","white":"Tom","black":"Ben","clock":"10+5","date":"2024/03/17 13:42:06","result":"0-1","condition":"checkmate"},"turn":"white","moveRule":"0/100","fullMove":1,"specialRights":{"1,2":true,"2,2":true,"3,2":true,"4,2":true,"5,2":true,"6,2":true,"7,2":true,"8,2":true,"1,7":true,"2,7":true,"3,7":true,"4,7":true,"5,7":true,"6,7":true,"7,7":true,"8,7":true,"1,1":true,"5,1":true,"8,1":true,"1,8":true,"5,8":true,"8,8":true},"startingPosition":{"1,2":"pawnsW","2,2":"pawnsW","3,2":"pawnsW","4,2":"pawnsW","5,2":"pawnsW","6,2":"pawnsW","7,2":"pawnsW","8,2":"pawnsW","1,7":"pawnsB","2,7":"pawnsB","3,7":"pawnsB","4,7":"pawnsB","5,7":"pawnsB","6,7":"pawnsB","7,7":"pawnsB","8,7":"pawnsB","1,1":"rooksW","8,1":"rooksW","1,8":"rooksB","8,8":"rooksB","2,1":"knightsW","7,1":"knightsW","2,8":"knightsB","7,8":"knightsB","3,1":"bishopsW","6,1":"bishopsW","3,8":"bishopsB","6,8":"bishopsB","4,1":"queensW","4,8":"queensB","5,1":"kingsW","5,8":"kingsB"},"moves":[{"type":"pawnsW","startCoords":[4,2],"endCoords":[4,4]},{"type":"pawnsB","startCoords":[4,7],"endCoords":[4,6]},{"type":"pawnsW","startCoords":[4,4],"endCoords":[4,5]},{"type":"pawnsB","startCoords":[3,7],"endCoords":[3,5]},{"type":"pawnsW","startCoords":[4,5],"endCoords":[3,6],"captured":"pawnsB","enpassant":-1},{"type":"bishopsB","startCoords":[6,8],"endCoords":[3,11]},{"type":"pawnsW","startCoords":[3,6],"endCoords":[2,7],"captured":"pawnsB"},{"type":"bishopsB","startCoords":[3,11],"endCoords":[-4,4]},{"type":"pawnsW","startCoords":[2,7],"endCoords":[1,8],"captured":"rooksB","promotion":"queensW"},{"type":"bishopsB","startCoords":[-4,4],"endCoords":[2,-2],"check":true},{"type":"kingsW","startCoords":[5,1],"endCoords":[4,2]},{"type":"knightsB","startCoords":[7,8],"endCoords":[6,6]},{"type":"queensW","startCoords":[1,8],"endCoords":[2,8],"captured":"knightsB"},{"type":"kingsB","startCoords":[5,8],"endCoords":[7,8],"castle":{"dir":1,"coord":[8,8]}},{"type":"queensW","startCoords":[2,8],"endCoords":[1,7],"captured":"pawnsB"},{"type":"queensB","startCoords":[4,8],"endCoords":[0,4]},{"type":"queensW","startCoords":[1,7],"endCoords":[7,13],"check":true},{"type":"kingsB","startCoords":[7,8],"endCoords":[8,8]},{"type":"queensW","startCoords":[7,13],"endCoords":[7,7],"captured":"pawnsB","check":true},{"type":"kingsB","startCoords":[8,8],"endCoords":[7,7],"captured":"queensW"},{"type":"pawnsW","startCoords":[8,2],"endCoords":[8,4]},{"type":"queensB","startCoords":[0,4],"endCoords":[4,4],"check":true,"mate":true}],"gameRules":{"slideLimit":"Infinity","promotionRanks":[1,8],"promotionsAllowed":{"white":["queens","rooks","bishops","knights"],"black":["queens","rooks","bishops","knights"]},"ovenTemperature": "350","winConditions":{"white":["checkmate"],"black":["checkmate"]}}}
-let outputNice = LongToShort_Format(gameExample, compact_moves = false);
+{"metadata":{"Variant":"Classical","Version":"1","White":"Tom","Black":"Ben","Clock":"10+5","Date":"2024/03/17 13:42:06","Result":"0-1","Condition":"checkmate"},"turn":"white","moveRule":"0/100","fullMove":1,"specialRights":{"1,2":true,"2,2":true,"3,2":true,"4,2":true,"5,2":true,"6,2":true,"7,2":true,"8,2":true,"1,7":true,"2,7":true,"3,7":true,"4,7":true,"5,7":true,"6,7":true,"7,7":true,"8,7":true,"1,1":true,"5,1":true,"8,1":true,"1,8":true,"5,8":true,"8,8":true},"startingPosition":{"1,2":"pawnsW","2,2":"pawnsW","3,2":"pawnsW","4,2":"pawnsW","5,2":"pawnsW","6,2":"pawnsW","7,2":"pawnsW","8,2":"pawnsW","1,7":"pawnsB","2,7":"pawnsB","3,7":"pawnsB","4,7":"pawnsB","5,7":"pawnsB","6,7":"pawnsB","7,7":"pawnsB","8,7":"pawnsB","1,1":"rooksW","8,1":"rooksW","1,8":"rooksB","8,8":"rooksB","2,1":"knightsW","7,1":"knightsW","2,8":"knightsB","7,8":"knightsB","3,1":"bishopsW","6,1":"bishopsW","3,8":"bishopsB","6,8":"bishopsB","4,1":"queensW","4,8":"queensB","5,1":"kingsW","5,8":"kingsB"},"moves":[{"type":"pawnsW","startCoords":[4,2],"endCoords":[4,4]},{"type":"pawnsB","startCoords":[4,7],"endCoords":[4,6]},{"type":"pawnsW","startCoords":[4,4],"endCoords":[4,5]},{"type":"pawnsB","startCoords":[3,7],"endCoords":[3,5]},{"type":"pawnsW","startCoords":[4,5],"endCoords":[3,6],"captured":"pawnsB","enpassant":-1},{"type":"bishopsB","startCoords":[6,8],"endCoords":[3,11]},{"type":"pawnsW","startCoords":[3,6],"endCoords":[2,7],"captured":"pawnsB"},{"type":"bishopsB","startCoords":[3,11],"endCoords":[-4,4]},{"type":"pawnsW","startCoords":[2,7],"endCoords":[1,8],"captured":"rooksB","promotion":"queensW"},{"type":"bishopsB","startCoords":[-4,4],"endCoords":[2,-2],"check":true},{"type":"kingsW","startCoords":[5,1],"endCoords":[4,2]},{"type":"knightsB","startCoords":[7,8],"endCoords":[6,6]},{"type":"queensW","startCoords":[1,8],"endCoords":[2,8],"captured":"knightsB"},{"type":"kingsB","startCoords":[5,8],"endCoords":[7,8],"castle":{"dir":1,"coord":[8,8]}},{"type":"queensW","startCoords":[2,8],"endCoords":[1,7],"captured":"pawnsB"},{"type":"queensB","startCoords":[4,8],"endCoords":[0,4]},{"type":"queensW","startCoords":[1,7],"endCoords":[7,13],"check":true},{"type":"kingsB","startCoords":[7,8],"endCoords":[8,8]},{"type":"queensW","startCoords":[7,13],"endCoords":[7,7],"captured":"pawnsB","check":true},{"type":"kingsB","startCoords":[8,8],"endCoords":[7,7],"captured":"queensW"},{"type":"pawnsW","startCoords":[8,2],"endCoords":[8,4]},{"type":"queensB","startCoords":[0,4],"endCoords":[4,4],"check":true,"mate":true}],"gameRules":{"slideLimit":"Infinity","promotionRanks":[1,8],"promotionsAllowed":{"white":["queens","rooks","bishops","knights"],"black":["queens","rooks","bishops","knights"]},"ovenTemperature": "350","winConditions":{"white":["checkmate"],"black":["checkmate"]}}}
+let outputNice = LongToShort_Format(gameExample, compact_moves = 0, make_new_lines = true);
 console.log("Game in short format with nice moves:\n\n" + outputNice + "\n");
-let outputCompact = LongToShort_Format(gameExample, compact_moves = true);
-console.log("Game in short format with compact moves:\n\n" + outputCompact + "\n");
+let outputMoreCompact = LongToShort_Format(gameExample, compact_moves = 1, make_new_lines = true);
+console.log("Game in short format with more compact moves:\n\n" + outputMoreCompact + "\n");
+let outputMostCompact = LongToShort_Format(gameExample, compact_moves = 2, make_new_lines = true);
+console.log("Game in short format with most compact moves:\n\n" + outputMostCompact + "\n");
 
 // Converted back to long format
 let gameExampleBackToLong = ShortToLong_Format(outputNice);
