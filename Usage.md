@@ -53,7 +53,7 @@ From here on, we distinguish between two notation formats:
     {"type":"pawnsW","startCoords":[8,2],"endCoords":[8,4]},
     {"type":"queensB","startCoords":[0,4],"endCoords":[4,4],"check":true,"mate":true}]}
 ```
-The example above showcases the formatting of almost all optional arguments. If a players has no promotion rank, then this can be encoded as `"promotionRanks":[8,undefined]`. Additionally, if en passant at square `a,b` is possible in the initial position, this is encoded as `"enpassant":"a,b"` in the JSON. Crucially, `startingPosition` contains the piece list, while `specialRights` encodes the `+` signs corresponding to pawn double move and castling rights in the initial position.
+The example above showcases the formatting of almost all optional arguments. If a player has no promotion rank, then this can be encoded as `"promotionRanks":[8,undefined]`. Additionally, if en passant at square `a,b` is possible in the initial position, this is encoded as `"enpassant":"a,b"` in the JSON. Crucially, `startingPosition` contains the piece list, while `specialRights` encodes the `+` signs corresponding to pawn double move and castling rights in the initial position.
 
 Finally, `moves` gives the list of moves. Every move specifies the moved piece with `type` and the move's coordinates with `startCoords` and `endCoords`. If a piece is captured, this is specified with `captured`. If this happened en passant, this is specified with `enpassant` (`-1` for a white move, `1` for black for a black move). Finally, if the king castles, this is specified with `castle`, containing the x-direction of the king move and the coordinates of the piece he castled with.
 
