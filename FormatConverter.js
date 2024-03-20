@@ -334,8 +334,8 @@ function ShortToLong_Format(shortformatOG){
             }
         }
 
-        // win condition (has to start with a letter or bracket+letter)
-        if(/^(\(?[a-zA-z].*)$/.test(string)){
+        // win condition (has to be at least three letters long)
+        if(/^(\(?[a-zA-z][a-zA-z][a-zA-z].*)$/.test(string)){
             if (!longformat["gameRules"]){
                 longformat["gameRules"] = {};
             }
@@ -374,7 +374,7 @@ function ShortToLong_Format(shortformatOG){
             for (let i = 0; i<string.length; i++){
                 let end_key = string[i].indexOf(":");
                 let key = string[i].slice(0,end_key).trimStart().trimEnd();
-                let value = string[i].slice(end_key+1,-1).trimStart().trimEnd();
+                let value = string[i].slice(end_key+1).trimStart().trimEnd();
                 longformat["gameRules"][key] = value;
             }
             continue;
@@ -681,4 +681,4 @@ console.log("Position after 21 half moves in long format:\n\n" + JSON.stringify(
 
 
 // String test:
-// console.log(JSON.stringify(ShortToLong_Format(" 3,4  3 w 3232098/2319080123213 K3,3+ {asddssda: 2332} [asa: adsdsa] checkmate,asd")))
+// console.log('\n' + JSON.stringify(ShortToLong_Format(" 3,4  3 w 3232098/2319080123213 K3,3+ {asddssda: 2332} [asa: adsdsa] checkmate,asd   ")))
