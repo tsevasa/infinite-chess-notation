@@ -169,16 +169,17 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
         added_extras = true;
     }
     if (added_extras) {
-        const stringifiedExtraGameRules = JSON.stringify(extraGameRules)
-        shortformat += stringifiedExtraGameRules + " ";
+        shortformat += JSON.stringify(extraGameRules) + " ";
     }
 
 
     // position
     for (let coordinate in longformat["startingPosition"]){
         shortformat += LongToShort_Piece(longformat["startingPosition"][coordinate]) + coordinate;
-        if (longformat["specialRights"][coordinate]){
-            shortformat += "+";
+        if (longformat["specialRights"]){
+            if (longformat["specialRights"][coordinate]){
+                shortformat += "+";
+            }
         }
         shortformat += "|";
     }
@@ -356,6 +357,23 @@ function ShortToLong_Format(shortformatOG){
 
         // Other gameRules are included in the FEN. Parse them into an object
         if (string[0] === '{') {
+            string += " ";
+            while (true){
+                let num_opening_brackets = (/[\{]/.test(string) ? string.match(/[\{]/g).length : 0);
+                let num_closing_brackets = (/[\}]/.test(string) ? string.match(/[\}]/g).length : 0);
+                if (num_opening_brackets == num_closing_brackets){
+                    break;
+                } else if (string == ""){
+                    console.error("Mismatched number of {} brackets in optional arguments");
+                    return {};
+                }
+                let index_loc = shortformat.search(/\s/);
+                if (index_loc == -1){
+                    index_loc = shortformat.length;
+                }
+                string = string + shortformat.slice(0,index_loc+1);
+                shortformat = shortformat.slice(index_loc+1);
+            }
             const parsed = JSON.parse(string);
             if (!longformat.gameRules) longformat.gameRules = parsed;
             else for (const key in parsed) {
@@ -665,4 +683,4 @@ console.log("Position after 21 half moves in long format:\n\n" + JSON.stringify(
 
 
 // String test:
-// console.log('\n' + JSON.stringify(ShortToLong_Format(" 3,4  3 w 3232098/2319080123213 K3,3+ {asddssda: 2332} [asa: adsdsa] checkmate,asd   ")))
+// console.log('\n' + JSON.stringify(ShortToLong_Format(" 3,4  3 w 3232098/2319080123213 K3,3+ {\"asd dssda\": 2332, \"nest\" : { \"nes t2\": \"233 22\" }} [asa: adsdsa] checkmate,asd   ")));
