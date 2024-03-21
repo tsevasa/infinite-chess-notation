@@ -706,7 +706,7 @@ try{
     console.log('\nTest:\n\n' + JSON.stringify(ShortToLong_Format(' 3,4  3 w 3232098/2319080123213 K3,3+ {\"asdds}sd a\": 2332, "{nest}" : { "nes t2": "233 22" } } [asa: adsdsa] checkmate,asd   ')) + '\n');
 
     // Move conversion
-    console.log(JSON.stringify(ShortToLong_Format('2,-3>3,-4ha', false, false)));
+    console.log(ShortToLong_Format('2,-3>3,-4ha', false, false).moves[0]);
     console.log(LongToShort_Format(JSON.parse('{"moves":[{"startCoords":[2,-3],"endCoords":[3,-4],"promotion":"hawksB"}]}'),2,false));
 } catch(e){
     console.log(e);
