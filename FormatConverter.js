@@ -210,7 +210,7 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
             } else {
                 shortformat += (i == 0 ? "" : "|");
             }
-            shortformat += (compact_moves == 0 || compact_moves == 1 ? LongToShort_Piece(longmove["type"]) : "");
+            shortformat += (longmove["type"] && (compact_moves == 0 || compact_moves == 1) ? LongToShort_Piece(longmove["type"]) : "");
             shortformat += longmove["startCoords"][0].toString()+ "," + longmove["startCoords"][1].toString();
             shortformat += (compact_moves == 0 ? " " : "");
             shortformat += (longmove["captured"] && (compact_moves == 0 || compact_moves == 1) ? "x" : ">");
@@ -680,34 +680,6 @@ function GameToPosition(longformat, halfmoves = 0){
     return ret;
 }
 
-/**
- * Converts a single move in JSON format to compact ICN notation
- * @param {object} longmove - Input move in JSON format
- * @returns {string} Output string in compact ICN notation
- */
-function LongToShort_Move(longmove){
-    let promotedPiece = (longmove["promotion"] ? LongToShort_Piece(longmove["promotion"]) : "");
-    return longmove["startCoords"].toString() + ">" + longmove["endCoords"].toString() + promotedPiece;
-}
-
-/**
- * Converts a single move in compact ICN notation to JSON format
- * @param {string} shortmove - Input move as string (has to be in compact format!)
- * @returns {object} Output move as JSON
- */
-function ShortToLong_Move(shortmove){
-    let coords = shortmove.match(/-?[0-9]+,-?[0-9]+/g);
-    let promotedPiece = (/[a-zA-Z]+/.test(shortmove) ? ShortToLong_Piece(shortmove.match(/[a-zA-Z]+/g)) : "");
-    let longmove = {};
-    longmove["startCoords"] = coords[0];
-    longmove["endCoords"] = coords[1];
-    if (promotedPiece != ""){
-        longmove["promotion"] = promotedPiece;
-    }
-    return longmove;
-}
-
-
 
 try{
     // Example game converted from long to short format in three different levels of move compactness
@@ -731,11 +703,11 @@ try{
 
 
     // String test:
-    console.log('\nTest:\n\n' + JSON.stringify(ShortToLong_Format(' 3,4  3 w 3232098/2319080123213 K3,3+ {\"asdds}sd a\": 2332, "{nest}" : { "nes t2": "233 22" } } [asa: adsdsa] checkmate,asd   ')));
+    console.log('\nTest:\n\n' + JSON.stringify(ShortToLong_Format(' 3,4  3 w 3232098/2319080123213 K3,3+ {\"asdds}sd a\": 2332, "{nest}" : { "nes t2": "233 22" } } [asa: adsdsa] checkmate,asd   ')) + '\n');
 
     // Move conversion
-    console.log('\n'+JSON.stringify(ShortToLong_Move("-23,-1232>2323,3223HA")));
-    console.log(LongToShort_Move(ShortToLong_Move("-23,-1232>2323,3223AM")));
+    console.log(JSON.stringify(ShortToLong_Format('2,-3>3,-4ha', false, false)));
+    console.log(LongToShort_Format(JSON.parse('{"moves":[{"startCoords":[2,-3],"endCoords":[3,-4],"promotion":"hawksB"}]}'),2,false));
 } catch(e){
     console.log(e);
 }
