@@ -245,9 +245,11 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
 /**
  * Converts a string in Infinite Chess Notation to gamefile in JSON format
  * @param {string} shortformatOG - A string in ICN
+ * @param {boolean} reconstruct_optional_move_flags - If true, method will reconstruct "type", "captured", "enpassant" and "castle" flags of moves
+ * @param {boolean} trust_check_and_mate_symbols - If true, method will set "check" and "mate" flags of moves based on + and # symbols
  * @returns {object} Equivalent gamefile in JSON format
  */
-function ShortToLong_Format(shortformatOG){
+function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = true, trust_check_and_mate_symbols = true){
     let longformat = {};
     let shortformat = structuredClone(shortformatOG);
 
@@ -438,11 +440,15 @@ function ShortToLong_Format(shortformatOG){
                 throw new Error("Moves but no starting position submitted!");
             }
 
-            let runningCoordinates = structuredClone(longformat["startingPosition"]);
-            let runningRights = (longformat["specialRights"] ? structuredClone(longformat["specialRights"]) : {});
+            let runningCoordinates;
+            let runningRights;
             let wasWhiteDoublePawnMove = false;
             let wasBlackDoublePawnMove = false;
             let pawnEndString;
+            if (reconstruct_optional_move_flags){
+                runningCoordinates = structuredClone(longformat["startingPosition"]);
+                runningRights = (longformat["specialRights"] ? structuredClone(longformat["specialRights"]) : {});
+            }
 
             for (let i = 0; i < shortmoves.length; i++){
                 let longmove = {};
@@ -461,12 +467,14 @@ function ShortToLong_Format(shortformatOG){
 
                 let isCheck = false;
                 let isMate = false;
-                if (suffix.match(/\+/g)){
-                    isCheck = true;
-                }
-                if (suffix.match(/\#/g)){
-                    isCheck = true;
-                    isMate = true;
+                if (trust_check_and_mate_symbols){
+                    if (suffix.match(/\+/g)){
+                        isCheck = true;
+                    }
+                    if (suffix.match(/\#/g)){
+                        isCheck = true;
+                        isMate = true;
+                    }
                 }
 
                 let isPromotion = false;
@@ -477,98 +485,110 @@ function ShortToLong_Format(shortformatOG){
                     promotedPiece = ShortToLong_Piece(promotedPiece);
                 }
 
-                let movedPiece = structuredClone(runningCoordinates[startString]);
-                delete runningCoordinates[startString];
-                delete runningRights[startString];
-                longmove["type"] = movedPiece;
+                let movedPiece;
+                if (reconstruct_optional_move_flags){
+                    movedPiece = structuredClone(runningCoordinates[startString]);
+                    longmove["type"] = movedPiece;
+                    delete runningCoordinates[startString];
+                    delete runningRights[startString];
+                }
+                
                 longmove["startCoords"] = startCoords;
                 longmove["endCoords"] = endCoords;
 
                 // capture and en passant handling
-                if(runningCoordinates[endString]){
-                    let capturedPiece = structuredClone(runningCoordinates[endString]);
-                    delete runningCoordinates[endString];
-                    delete runningRights[endString];
-                    longmove["captured"] = capturedPiece;
-                } else if (movedPiece.slice(0, -1) == "pawns" && startCoords[0] != endCoords[0] && startCoords[1] != endCoords[1]){
-                    if (wasWhiteDoublePawnMove || wasBlackDoublePawnMove){
-                        capturedPiece = structuredClone(runningCoordinates[pawnEndString]);
-                        delete runningCoordinates[pawnEndString];
-                        delete runningRights[pawnEndString];
+                if (reconstruct_optional_move_flags){
+                    if(runningCoordinates[endString]){
+                        let capturedPiece = structuredClone(runningCoordinates[endString]);
+                        delete runningCoordinates[endString];
+                        delete runningRights[endString];
                         longmove["captured"] = capturedPiece;
-                        longmove["enpassant"] = (wasWhiteDoublePawnMove ? 1 : -1);
-                    } else{
-                        throw new Error("Error: En passant capture expected on move "+i+" but not possible.");
+                    } else if (movedPiece.slice(0, -1) == "pawns" && startCoords[0] != endCoords[0] && startCoords[1] != endCoords[1]){
+                        if (wasWhiteDoublePawnMove || wasBlackDoublePawnMove){
+                            capturedPiece = structuredClone(runningCoordinates[pawnEndString]);
+                            delete runningCoordinates[pawnEndString];
+                            delete runningRights[pawnEndString];
+                            longmove["captured"] = capturedPiece;
+                            longmove["enpassant"] = (wasWhiteDoublePawnMove ? 1 : -1);
+                        } else{
+                            throw new Error("Error: En passant capture expected on move "+i+" but not possible.");
+                        }
                     }
                 }
 
                 // promotion handling
                 if (isPromotion){
                     longmove["promotion"] = promotedPiece;
-                    runningCoordinates[endString] = promotedPiece;
+                    if (reconstruct_optional_move_flags) runningCoordinates[endString] = promotedPiece;
                 } else{
-                    runningCoordinates[endString] = movedPiece;
+                    if (reconstruct_optional_move_flags) runningCoordinates[endString] = movedPiece;
                 }
 
                 // detect if move is double pawn move, i.e. if it allows en passant next move
-                if (movedPiece.slice(0, -1) == "pawns"){
-                    if (startCoords[1] - endCoords[1] < -1){
-                        wasWhiteDoublePawnMove = true;
-                        wasBlackDoublePawnMove = false;
-                        pawnEndString = structuredClone(endString);
-                    } else if (startCoords[1] - endCoords[1] > 1){
-                        wasWhiteDoublePawnMove = false;
-                        wasBlackDoublePawnMove = true;
-                        pawnEndString = structuredClone(endString);
-                    } else{
-                        wasWhiteDoublePawnMove = false;
-                        wasBlackDoublePawnMove = false;
+                if (reconstruct_optional_move_flags){
+                    if (movedPiece.slice(0, -1) == "pawns"){
+                        if (startCoords[1] - endCoords[1] < -1){
+                            wasWhiteDoublePawnMove = true;
+                            wasBlackDoublePawnMove = false;
+                            pawnEndString = structuredClone(endString);
+                        } else if (startCoords[1] - endCoords[1] > 1){
+                            wasWhiteDoublePawnMove = false;
+                            wasBlackDoublePawnMove = true;
+                            pawnEndString = structuredClone(endString);
+                        } else{
+                            wasWhiteDoublePawnMove = false;
+                            wasBlackDoublePawnMove = false;
+                        }
                     }
                 }
 
                 // castling handling
-                if (movedPiece.slice(0, -1) == "kings"){
-                    let xmove = endCoords[0] - startCoords[0];
-                    if (xmove > 1 || xmove < -1){
-                        let castle = {};
-                        let castleCandidate = "";
-                        for (let coordinate in runningRights){
-                            let coordinateVec = coordinate.split(",");
-                            coordinateVec[0] = parseInt(coordinateVec[0]);
-                            coordinateVec[1] = parseInt(coordinateVec[1]);
-                            if (runningRights[coordinate] && runningCoordinates[coordinate]){
-                                if (coordinateVec[1] == startCoords[1]){
-                                    if ((coordinateVec[0] > startCoords[0] && xmove > 1) || (coordinateVec[0] < startCoords[0] && xmove < 1)) {
-                                        if (castleCandidate == ""){
-                                            castleCandidate = coordinateVec;
-                                        } else{
-                                            if ((xmove > 1 && castleCandidate[0] > coordinateVec[0]) || (xmove < 1 && castleCandidate[1] < coordinateVec[0])){
+                if (reconstruct_optional_move_flags){
+                    if (movedPiece.slice(0, -1) == "kings"){
+                        let xmove = endCoords[0] - startCoords[0];
+                        if (xmove > 1 || xmove < -1){
+                            let castle = {};
+                            let castleCandidate = "";
+                            for (let coordinate in runningRights){
+                                let coordinateVec = coordinate.split(",");
+                                coordinateVec[0] = parseInt(coordinateVec[0]);
+                                coordinateVec[1] = parseInt(coordinateVec[1]);
+                                if (runningRights[coordinate] && runningCoordinates[coordinate]){
+                                    if (coordinateVec[1] == startCoords[1]){
+                                        if ((coordinateVec[0] > startCoords[0] && xmove > 1) || (coordinateVec[0] < startCoords[0] && xmove < 1)) {
+                                            if (castleCandidate == ""){
                                                 castleCandidate = coordinateVec;
+                                            } else{
+                                                if ((xmove > 1 && castleCandidate[0] > coordinateVec[0]) || (xmove < 1 && castleCandidate[1] < coordinateVec[0])){
+                                                    castleCandidate = coordinateVec;
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
+                            if (castleCandidate == ""){
+                                throw new Error("Error: Castling failed on move "+i);
+                                break;
+                            }
+                            castle["dir"] = (xmove > 1 ? 1 : -1);
+                            castle["coord"] = castleCandidate;
+                            longmove["castle"] = castle;
+                            let castleString = castleCandidate[0].toString() + "," + castleCandidate[1].toString();
+                            runningCoordinates[(parseInt(endCoords[0])-castle["dir"]).toString() + "," + endCoords[1].toString()] = structuredClone(runningCoordinates[castleString]);
+                            delete runningCoordinates[castleString];
+                            delete runningRights[castleString];
                         }
-                        if (castleCandidate == ""){
-                            throw new Error("Error: Castling failed on move "+i);
-                            break;
-                        }
-                        castle["dir"] = (xmove > 1 ? 1 : -1);
-                        castle["coord"] = castleCandidate;
-                        longmove["castle"] = castle;
-                        let castleString = castleCandidate[0].toString() + "," + castleCandidate[1].toString();
-                        runningCoordinates[(parseInt(endCoords[0])-castle["dir"]).toString() + "," + endCoords[1].toString()] = structuredClone(runningCoordinates[castleString]);
-                        delete runningCoordinates[castleString];
-                        delete runningRights[castleString];
                     }
                 }
 
                 // check and mate
-                if (isCheck){
-                    longmove["check"] = true;
-                    if (isMate){
-                        longmove["mate"] = true;
+                if (trust_check_and_mate_symbols){
+                    if (isCheck){
+                        longmove["check"] = true;
+                        if (isMate){
+                            longmove["mate"] = true;
+                        }
                     }
                 }
                 
@@ -702,7 +722,7 @@ try{
     console.log("Game in short format with most compact moves:\n\n" + outputMostCompact + "\n");
 
     // Converted back to long format
-    let gameExampleBackToLong = ShortToLong_Format(outputNice);
+    let gameExampleBackToLong = ShortToLong_Format(outputNice, true, true);
     console.log("Converted back to long format:\n\n" + JSON.stringify(gameExampleBackToLong)+ "\n");
 
     // Position after 21 halfmoves:
