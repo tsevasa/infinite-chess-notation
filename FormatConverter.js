@@ -680,6 +680,33 @@ function GameToPosition(longformat, halfmoves = 0){
     return ret;
 }
 
+/**
+ * Converts a single move in JSON format to compact ICN notation: "a,b>c,dX"
+ * @param {object} longmove - Input move in JSON format
+ * @returns {string} Output string in compact ICN notation
+ */
+function LongToShort_CompactMove(longmove){
+    let promotedPiece = (longmove["promotion"] ? LongToShort_Piece(longmove["promotion"]) : "");
+    return longmove["startCoords"].toString() + ">" + longmove["endCoords"].toString() + promotedPiece;
+}
+
+/**
+ * Converts a single compact move "a,b>c,dX" in ICN notation to JSON format
+ * @param {string} shortmove - Input move as string
+ * @returns {object} Output move as JSON
+ */
+function ShortToLong_CompactMove(shortmove){
+    let coords = shortmove.match(/-?[0-9]+,-?[0-9]+/g);
+    let promotedPiece = (/[a-zA-Z]+/.test(shortmove) ? ShortToLong_Piece(shortmove.match(/[a-zA-Z]+/g)) : "");
+    let longmove = {};
+    longmove["startCoords"] = coords[0];
+    longmove["endCoords"] = coords[1];
+    if (promotedPiece != ""){
+        longmove["promotion"] = promotedPiece;
+    }
+    return longmove;
+}
+
 
 try{
     // Example game converted from long to short format in three different levels of move compactness
@@ -706,8 +733,8 @@ try{
     console.log('\nTest:\n\n' + JSON.stringify(ShortToLong_Format(' 3,4  3 w 3232098/2319080123213 K3,3+ {\"asdds}sd a\": 2332, "{nest}" : { "nes t2": "233 22" } } [asa: adsdsa] checkmate,asd   ')) + '\n');
 
     // Move conversion
-    console.log(ShortToLong_Format('2,-3>3,-4ha', false, false).moves[0]);
-    console.log(LongToShort_Format(JSON.parse('{"moves":[{"startCoords":[2,-3],"endCoords":[3,-4],"promotion":"hawksB"}]}'),2,false));
+    console.log(ShortToLong_CompactMove('2,-3>3,-4ha'));
+    console.log(LongToShort_CompactMove(JSON.parse('{"startCoords":[2,-3],"endCoords":[3,-4],"promotion":"hawksB"}')));
 } catch(e){
     console.log(e);
 }
