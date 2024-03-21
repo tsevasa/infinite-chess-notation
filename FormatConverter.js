@@ -180,23 +180,9 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
         shortformat += JSON.stringify(extraGameRules) + " ";
     }
 
-
     // position
-    for (let coordinate in longformat["startingPosition"]){
-        shortformat += LongToShort_Piece(longformat["startingPosition"][coordinate]) + coordinate;
-        if (longformat["specialRights"]){
-            if (longformat["specialRights"][coordinate]){
-                shortformat += "+";
-            }
-        }
-        shortformat += "|";
-    }
-    if (longformat["startingPosition"]){
-        shortformat = shortformat.slice(0, -1);
-        if (longformat["moves"]){
-            shortformat += whitespace + whitespace;
-        }
-    }
+    shortformat += LongToShort_Position(longformat.startingPosition, longformat.specialRights);
+    shortformat += whitespace + whitespace; // Add more spacing for the next part
 
     // moves
     if (longformat["moves"]){
@@ -707,6 +693,95 @@ function ShortToLong_CompactMove(shortmove){
     return longmove;
 }
 
+/**
+ * Accepts a gamefile's starting position and specialRights properties, returns the position in compressed notation (.e.g., "P5,6+|k15,-56|Q5000,1")
+ * @param {object} position - The starting position of the gamefile, in the form 'x,y':'pawnsW'
+ * @param {object} [specialRights] - Optional. The special rights of each piece in the gamefile, in the form 'x,y':true, where true means the piece at that coordinate can perform their special move (pawn double push, castling rights..)
+ * @returns {string} The position of the game in compressed form, where each piece with a + has its special move ability
+ */
+function LongToShort_Position(position, specialRights = {}) {
+    let compressed = "";
+    if (!position) return compressed; // undefined position --> no string
+    
+    let atleast1Piece = false;
+    for (let coordinate in position){
+        atleast1Piece = true;
+        compressed += LongToShort_Piece(position[coordinate]) + coordinate;
+        if (specialRights[coordinate]) compressed += "+";
+        compressed += "|";
+    }
+    if (atleast1Piece) compressed = compressed.slice(0, -1); // Trim off the final |
+    return compressed;
+}
+
+/**
+ * Generates the specialRights property of a gamefile, given the provided position and gamerules.
+ * Only gives pieces that can castle their right if they are on the same rank, and color, as the king, and atleast 3 squares away
+ * 
+ * This can be manually used to compress the starting position of variants of InfiniteChess.org to shrink the size of the code
+ * @param {object} position - The starting position of the gamefile, in the form 'x,y':'pawnsW'
+ * @param {boolean} pawnDoublePush - Whether or not pawns are allowed to double push
+ * @param {string | undefined} castleWith - If castling is allowed, this is what piece the king can castle with (e.g., "rooks"), otherwise leave it undefined
+ * @returns {object} The specialRights gamefile property, in the form 'x,y':true, where true means the piece at that location has their special move ability (pawn double push, castling rights..)
+ */
+function generateSpecialRights(position, pawnDoublePush, castleWith) {
+    const specialRights = {};
+    const kingsFound = {}; // Running list of kings discovered, 'x,y':'white'
+    const castleWithsFound = {}; // Running list of pieces found that are able to castle (e.g. rooks), 'x,y':'black'
+
+    for (const key in position) {
+        const thisPiece = position[key]; // e.g. "pawnsW"
+        if (pawnDoublePush && thisPiece.startsWith('pawns')) specialRights[key] = true;
+        else if (castleWith && thisPiece.startsWith('kings')) {
+            specialRights[key] = true;
+            const color = getPieceColorFromType(thisPiece);
+            kingsFound[key] = color;
+        }
+        else if (castleWith && thisPiece.startsWith(castleWith)) {
+            const color = getPieceColorFromType(thisPiece);
+            castleWithsFound[key] = color;
+        }
+    }
+
+    // Only give the pieces that can castle their special move ability
+    // if they are the same row and color as a king!
+    if (kingsFound.length === 0) return specialRights; // Nothing can castle, return now.
+    for (const coord in castleWithsFound) { // 'x,y':'white'
+        const coords = getCoordsFromString(coord); // [x,y]
+        for (const kingCoord in kingsFound) { // 'x,y':'white'
+            const kingCoords = getCoordsFromString(kingCoord); // [x,y]
+            if (coords[1] !== kingCoords[1]) continue; // Not the same y level
+            if (castleWithsFound[coord] !== kingsFound[kingCoord]) continue; // Their colors don't match
+            const xDist = Math.abs(coords[0] - kingCoords[0]);
+            if (xDist < 3) continue; // Not ateast 3 squares away
+            specialRights[coord] = true; // Same row and color as the king! This piece can castle.
+        }
+    }
+
+    return specialRights;
+}
+
+/**
+ * Returns a length-2 array of the provided coordinates
+ * @param {string} key - 'x,y'
+ * @return {number[]} The coordinates of the piece, [x,y]
+ */
+function getCoordsFromString(key) {
+    return key.split(',').map(Number);
+}
+
+/**
+ * Returns the color of the provided piece type
+ * @param {string} type - The type of the piece (e.g., "pawnsW")
+ * @returns {string} The color of the piece, "white", "black", or "neutral"
+ */
+function getPieceColorFromType(type) {
+    // If the last letter of the piece type is 'W', the piece is white.
+    if (type.endsWith('W')) return "white"
+    else if (type.endsWith('B')) return "black"
+    else if (type.endsWith('N')) return "neutral"
+    else throw new Error(`Cannot get color of piece with type "${type}"!`)
+}
 
 try{
     // Example game converted from long to short format in three different levels of move compactness
@@ -735,6 +810,18 @@ try{
     // Move conversion
     console.log(ShortToLong_CompactMove('2,-3>3,-4ha'));
     console.log(LongToShort_CompactMove(JSON.parse('{"startCoords":[2,-3],"endCoords":[3,-4],"promotion":"hawksB"}')));
+
+    // specialMoves reconstruction, given the position, pawnDoublePush gamerule, and castleWith gamerule
+    const positionExample = {"1,2":"pawnsW","2,2":"pawnsW","3,2":"pawnsW","4,2":"pawnsW","5,2":"pawnsW","6,2":"pawnsW","7,2":"pawnsW","8,2":"pawnsW","1,7":"pawnsB","2,7":"pawnsB","3,7":"pawnsB","4,7":"pawnsB","5,7":"pawnsB","6,7":"pawnsB","7,7":"pawnsB","8,7":"pawnsB","1,1":"rooksW","8,1":"rooksW","1,8":"rooksB","8,8":"rooksB","2,1":"knightsW","7,1":"rooksW","2,8":"knightsB","7,8":"knightsB","3,1":"bishopsW","6,1":"bishopsW","3,8":"bishopsB","6,8":"bishopsB","4,1":"queensW","4,8":"queensB","5,1":"kingsW","5,8":"kingsB"};
+    const specialMoves = generateSpecialRights(positionExample, false, "rooks")
+    console.log(`\nspecialMoves reconstruction example:\n\n${JSON.stringify(specialMoves)}`)
+
+    // Compressing of a variant's starting position, only provided the pawnDoublePush and castleWith gamerules.
+    const a = {"1,2": "pawnsW","2,2": "pawnsW","3,2": "pawnsW","4,2": "pawnsW","5,2": "pawnsW","6,2": "pawnsW","7,2": "pawnsW","8,2": "pawnsW","1,7": "pawnsB","2,7": "pawnsB","3,7": "pawnsB","4,7": "pawnsB","5,7": "pawnsB","6,7": "pawnsB","7,7": "pawnsB","8,7": "pawnsB","1,1": "rooksW","8,1": "rooksW","1,8": "rooksB","8,8": "rooksB","2,1": "knightsW","7,1": "knightsW","2,8": "knightsB","7,8": "knightsB","3,1": "bishopsW","6,1": "bishopsW","3,8": "bishopsB","6,8": "bishopsB","4,1": "queensW","4,8": "queensB","5,1": "kingsW","5,8": "kingsB"}
+    const special = generateSpecialRights(a,true,"rooks")
+    const b = LongToShort_Position(a,special)
+    console.log(`\n\nCompressing of a variant's starting position example:\n\n${JSON.stringify(b)}`)
+    
 } catch(e){
     console.log(e);
 }
