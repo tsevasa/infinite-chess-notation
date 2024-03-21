@@ -746,7 +746,7 @@ function generateSpecialRights(position, pawnDoublePush, castleWith) {
     // Only give the pieces that can castle their special move ability
     // if they are the same row and color as a king!
     if (kingsFound.length === 0) return specialRights; // Nothing can castle, return now.
-    for (const coord in castleWithsFound) { // 'x,y':'white'
+    outerFor: for (const coord in castleWithsFound) { // 'x,y':'white'
         const coords = getCoordsFromString(coord); // [x,y]
         for (const kingCoord in kingsFound) { // 'x,y':'white'
             const kingCoords = getCoordsFromString(kingCoord); // [x,y]
@@ -755,6 +755,9 @@ function generateSpecialRights(position, pawnDoublePush, castleWith) {
             const xDist = Math.abs(coords[0] - kingCoords[0]);
             if (xDist < 3) continue; // Not ateast 3 squares away
             specialRights[coord] = true; // Same row and color as the king! This piece can castle.
+            // We already know this piece can castle, we don't
+            // need to see if it's on the same rank as any other king
+            continue outerFor;
         }
     }
 
