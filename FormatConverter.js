@@ -697,6 +697,17 @@ function LongToShort_Position(position, specialRights = {}) {
 }
 
 /**
+ * Accepts a gamefile's starting position, pawnDoublePush and castleWith gamerules, returns the position in compressed notation (.e.g., "P5,6+|k15,-56|Q5000,1")
+ * @param {object} position - The starting position of the gamefile, in the form 'x,y':'pawnsW'
+ * @param {boolean} pawnDoublePush - Whether or not pawns are allowed to double push
+ * @param {string | undefined} castleWith - If castling is allowed, this is what piece the king can castle with (e.g., "rooks"),
+ */
+function LongToShort_Position_FromGamerules(position, pawnDoublePush, castleWith) {
+    const specialRights = generateSpecialRights(position, pawnDoublePush, castleWith);
+    return LongToShort_Position(position, specialRights); // Now we have the information we need!
+}
+
+/**
  * Generates the specialRights property of a gamefile, given the provided position and gamerules.
  * Only gives pieces that can castle their right if they are on the same rank, and color, as the king, and atleast 3 squares away
  * 
@@ -832,13 +843,13 @@ try{
 
     // specialMoves reconstruction, given the position, pawnDoublePush gamerule, and castleWith gamerule
     const positionExample = {"1,2":"pawnsW","2,2":"pawnsW","3,2":"pawnsW","4,2":"pawnsW","5,2":"pawnsW","6,2":"pawnsW","7,2":"pawnsW","8,2":"pawnsW","1,7":"pawnsB","2,7":"pawnsB","3,7":"pawnsB","4,7":"pawnsB","5,7":"pawnsB","6,7":"pawnsB","7,7":"pawnsB","8,7":"pawnsB","1,1":"rooksW","8,1":"rooksW","1,8":"rooksB","8,8":"rooksB","2,1":"knightsW","7,1":"rooksW","2,8":"knightsB","7,8":"knightsB","3,1":"bishopsW","6,1":"bishopsW","3,8":"bishopsB","6,8":"bishopsB","4,1":"queensW","4,8":"queensB","5,1":"kingsW","5,8":"kingsB"};
-    const specialMoves = generateSpecialRights(positionExample, false, "rooks")
+    const specialMoves = generateSpecialRights(positionExample, true, "rooks")
     console.log(`\nspecialMoves reconstruction example:\n\n${JSON.stringify(specialMoves)}`)
 
     // Compressing of a variant's starting position, only provided the pawnDoublePush and castleWith gamerules.
     const a = {"1,2": "pawnsW","2,2": "pawnsW","3,2": "pawnsW","4,2": "pawnsW","5,2": "pawnsW","6,2": "pawnsW","7,2": "pawnsW","8,2": "pawnsW","1,7": "pawnsB","2,7": "pawnsB","3,7": "pawnsB","4,7": "pawnsB","5,7": "pawnsB","6,7": "pawnsB","7,7": "pawnsB","8,7": "pawnsB","1,1": "rooksW","8,1": "rooksW","1,8": "rooksB","8,8": "rooksB","2,1": "knightsW","7,1": "knightsW","2,8": "knightsB","7,8": "knightsB","3,1": "bishopsW","6,1": "bishopsW","3,8": "bishopsB","6,8": "bishopsB","4,1": "queensW","4,8": "queensB","5,1": "kingsW","5,8": "kingsB"}
-    const special = generateSpecialRights(a,true,"rooks")
-    const b = LongToShort_Position(a,special)
+    const b = LongToShort_Position_FromGamerules(a, true, 'rooks');
+    
     console.log(`\n\nCompressing of a variant's starting position example:\n\n${JSON.stringify(b)}`)
     
 } catch(e){
