@@ -33,14 +33,14 @@ const invertedpieceDictionary = invertDictionary(pieceDictionary);
 
 function LongToShort_Piece(longpiece){
     if (!pieceDictionary.hasOwnProperty(longpiece)){
-        console.error("Unknown piece type detected: "+longpiece);
+        throw new Error("Unknown piece type detected: "+longpiece);
     }
     return pieceDictionary[longpiece];
 }
 
 function ShortToLong_Piece(shortpiece){
     if (!invertedpieceDictionary.hasOwnProperty(shortpiece)){
-        console.error("Unknown piece abbreviation detected: "+shortpiece);
+        throw new Error("Unknown piece abbreviation detected: "+shortpiece);
     }
     return invertedpieceDictionary[shortpiece];
 }
@@ -257,8 +257,7 @@ function ShortToLong_Format(shortformatOG){
         let start_index = shortformat.indexOf("[");
         let end_index = shortformat.indexOf("]");
         if (end_index == -1){
-            console.error("Unclosed [ detected");
-            return {};
+            throw new Error("Unclosed [ detected");
         }
         let metadatastring = shortformat.slice(start_index+1,end_index);
         shortformat = shortformat.slice(0,start_index) + shortformat.slice(end_index+1);
@@ -295,7 +294,7 @@ function ShortToLong_Format(shortformatOG){
 
         // en passant
         if (!longformat["enpassant"] && /^(-?[0-9]+,-?[0-9]+)$/.test(string)){
-            longformat["enpassant"] = string;
+            longformat["enpassant"] = [parseInt(string.split(",")[0]), parseInt(string.split(",")[1])];
             continue;
         }
 
@@ -371,8 +370,7 @@ function ShortToLong_Format(shortformatOG){
                 if (isJson(string)){
                     break;
                 } else if (shortformat == ""){
-                    console.error("Extra optional arguments not in JSON format");
-                    return {};
+                    throw new Error("Extra optional arguments not in JSON format");
                 }
                 let index_loc = shortformat.search(/\s/);
                 if (index_loc == -1){
@@ -426,8 +424,7 @@ function ShortToLong_Format(shortformatOG){
                 let start_index = shortmoves.indexOf("\{");
                 let end_index = shortmoves.indexOf("\}");
                 if (end_index == -1){
-                    console.error("Unclosed \{ found.");
-                    return {};
+                    throw new Error("Unclosed \{ found.");
                 }
                 shortmoves = shortmoves.slice(0,start_index) + shortmoves.slice(end_index+1);
             }
@@ -438,9 +435,7 @@ function ShortToLong_Format(shortformatOG){
                 return longformat;
             }
             if (!longformat["startingPosition"]){
-                console.error("Moves but no starting position submitted!");
-                delete longformat["moves"];
-                return longformat;
+                throw new Error("Moves but no starting position submitted!");
             }
 
             let runningCoordinates = structuredClone(longformat["startingPosition"]);
@@ -503,8 +498,7 @@ function ShortToLong_Format(shortformatOG){
                         longmove["captured"] = capturedPiece;
                         longmove["enpassant"] = (wasWhiteDoublePawnMove ? 1 : -1);
                     } else{
-                        console.error("Error: En passant capture expected on move "+i+" but not possible.");
-                        break;
+                        throw new Error("Error: En passant capture expected on move "+i+" but not possible.");
                     }
                 }
 
@@ -557,7 +551,7 @@ function ShortToLong_Format(shortformatOG){
                             }
                         }
                         if (castleCandidate == ""){
-                            console.error("Error: Castling failed on move "+i);
+                            throw new Error("Error: Castling failed on move "+i);
                             break;
                         }
                         castle["dir"] = (xmove > 1 ? 1 : -1);
@@ -667,27 +661,62 @@ function GameToPosition(longformat, halfmoves = 0){
     return ret;
 }
 
+/**
+ * Converts a single move in JSON format to ICN notation
+ * @param {object} longmove - Input move in JSON format
+ * @returns {string} Output string in compact ICN notation
+ */
+function LongToShort_Move(longmove){
+    let promotedPiece = (longmove["promotion"] ? LongToShort_Piece(longmove["promotion"]) : "");
+    return longmove["startCoords"].toString() + ">" + longmove["endCoords"].toString() + promotedPiece;
+}
+
+/**
+ * Converts a single move in ICN notation to JSON format
+ * @param {string} shortmove - Input move as string
+ * @returns {object} Output move as JSON
+ */
+function ShortToLong_Move(shortmove){
+    let coords = shortmove.match(/-?[0-9]+,-?[0-9]+/g);
+    let promotedPiece = (/[a-zA-Z]+/.test(shortmove) ? ShortToLong_Piece(shortmove.match(/[a-zA-Z]+/g)) : "");
+    let longmove = {};
+    longmove["startCoords"] = coords[0];
+    longmove["endCoords"] = coords[1];
+    if (promotedPiece != ""){
+        longmove["promotion"] = promotedPiece;
+    }
+    return longmove;
+}
 
 
-// Example game converted from long to short format in three different levels of move compactness
-gameExample = 
-{"metadata":{"Variant":"Classical","Version":"1","White":"Tom","Black":"Ben","Clock":"10+5","Date":"2024/03/17 13:42:06","Result":"0-1","Condition":"checkmate"},"turn":"white","moveRule":"0/100","fullMove":1,"gameRules":{"slideLimit":"Infinity","promotionRanks":[8,1],"promotionsAllowed":{"white":["queens","rooks","bishops","knights"],"black":["queens","rooks","bishops","knights"]},"ovenTemperature": 350,"winConditions":{"white":["checkmate"],"black":["checkmate"]}},"specialRights":{"1,2":true,"2,2":true,"3,2":true,"4,2":true,"5,2":true,"6,2":true,"7,2":true,"8,2":true,"1,7":true,"2,7":true,"3,7":true,"4,7":true,"5,7":true,"6,7":true,"7,7":true,"8,7":true,"1,1":true,"5,1":true,"8,1":true,"1,8":true,"5,8":true,"8,8":true},"startingPosition":{"1,2":"pawnsW","2,2":"pawnsW","3,2":"pawnsW","4,2":"pawnsW","5,2":"pawnsW","6,2":"pawnsW","7,2":"pawnsW","8,2":"pawnsW","1,7":"pawnsB","2,7":"pawnsB","3,7":"pawnsB","4,7":"pawnsB","5,7":"pawnsB","6,7":"pawnsB","7,7":"pawnsB","8,7":"pawnsB","1,1":"rooksW","8,1":"rooksW","1,8":"rooksB","8,8":"rooksB","2,1":"knightsW","7,1":"knightsW","2,8":"knightsB","7,8":"knightsB","3,1":"bishopsW","6,1":"bishopsW","3,8":"bishopsB","6,8":"bishopsB","4,1":"queensW","4,8":"queensB","5,1":"kingsW","5,8":"kingsB"},"moves":[{"type":"pawnsW","startCoords":[4,2],"endCoords":[4,4]},{"type":"pawnsB","startCoords":[4,7],"endCoords":[4,6]},{"type":"pawnsW","startCoords":[4,4],"endCoords":[4,5]},{"type":"pawnsB","startCoords":[3,7],"endCoords":[3,5]},{"type":"pawnsW","startCoords":[4,5],"endCoords":[3,6],"captured":"pawnsB","enpassant":-1},{"type":"bishopsB","startCoords":[6,8],"endCoords":[3,11]},{"type":"pawnsW","startCoords":[3,6],"endCoords":[2,7],"captured":"pawnsB"},{"type":"bishopsB","startCoords":[3,11],"endCoords":[-4,4]},{"type":"pawnsW","startCoords":[2,7],"endCoords":[1,8],"captured":"rooksB","promotion":"queensW"},{"type":"bishopsB","startCoords":[-4,4],"endCoords":[2,-2],"check":true},{"type":"kingsW","startCoords":[5,1],"endCoords":[4,2]},{"type":"knightsB","startCoords":[7,8],"endCoords":[6,6]},{"type":"queensW","startCoords":[1,8],"endCoords":[2,8],"captured":"knightsB"},{"type":"kingsB","startCoords":[5,8],"endCoords":[7,8],"castle":{"dir":1,"coord":[8,8]}},{"type":"queensW","startCoords":[2,8],"endCoords":[1,7],"captured":"pawnsB"},{"type":"queensB","startCoords":[4,8],"endCoords":[0,4]},{"type":"queensW","startCoords":[1,7],"endCoords":[7,13],"check":true},{"type":"kingsB","startCoords":[7,8],"endCoords":[8,8]},{"type":"queensW","startCoords":[7,13],"endCoords":[7,7],"captured":"pawnsB","check":true},{"type":"kingsB","startCoords":[8,8],"endCoords":[7,7],"captured":"queensW"},{"type":"pawnsW","startCoords":[8,2],"endCoords":[8,4]},{"type":"queensB","startCoords":[0,4],"endCoords":[4,4],"check":true,"mate":true}]}
-let outputNice = LongToShort_Format(gameExample, compact_moves = 0, make_new_lines = true);
-console.log("Game in short format with nice moves:\n\n" + outputNice + "\n");
-let outputMoreCompact = LongToShort_Format(gameExample, compact_moves = 1, make_new_lines = true);
-console.log("Game in short format with more compact moves:\n\n" + outputMoreCompact + "\n");
-let outputMostCompact = LongToShort_Format(gameExample, compact_moves = 2, make_new_lines = true);
-console.log("Game in short format with most compact moves:\n\n" + outputMostCompact + "\n");
 
-// Converted back to long format
-let gameExampleBackToLong = ShortToLong_Format(outputNice);
-console.log("Converted back to long format:\n\n" + JSON.stringify(gameExampleBackToLong)+ "\n");
+try{
+    // Example game converted from long to short format in three different levels of move compactness
+    gameExample = 
+    {"metadata":{"Variant":"Classical","Version":"1","White":"Tom","Black":"Ben","Clock":"10+5","Date":"2024/03/17 13:42:06","Result":"0-1","Condition":"checkmate"},"turn":"white","moveRule":"0/100","fullMove":1,"gameRules":{"slideLimit":"Infinity","promotionRanks":[8,1],"promotionsAllowed":{"white":["queens","rooks","bishops","knights"],"black":["queens","rooks","bishops","knights"]},"ovenTemperature": 350,"winConditions":{"white":["checkmate"],"black":["checkmate"]}},"specialRights":{"1,2":true,"2,2":true,"3,2":true,"4,2":true,"5,2":true,"6,2":true,"7,2":true,"8,2":true,"1,7":true,"2,7":true,"3,7":true,"4,7":true,"5,7":true,"6,7":true,"7,7":true,"8,7":true,"1,1":true,"5,1":true,"8,1":true,"1,8":true,"5,8":true,"8,8":true},"startingPosition":{"1,2":"pawnsW","2,2":"pawnsW","3,2":"pawnsW","4,2":"pawnsW","5,2":"pawnsW","6,2":"pawnsW","7,2":"pawnsW","8,2":"pawnsW","1,7":"pawnsB","2,7":"pawnsB","3,7":"pawnsB","4,7":"pawnsB","5,7":"pawnsB","6,7":"pawnsB","7,7":"pawnsB","8,7":"pawnsB","1,1":"rooksW","8,1":"rooksW","1,8":"rooksB","8,8":"rooksB","2,1":"knightsW","7,1":"knightsW","2,8":"knightsB","7,8":"knightsB","3,1":"bishopsW","6,1":"bishopsW","3,8":"bishopsB","6,8":"bishopsB","4,1":"queensW","4,8":"queensB","5,1":"kingsW","5,8":"kingsB"},"moves":[{"type":"pawnsW","startCoords":[4,2],"endCoords":[4,4]},{"type":"pawnsB","startCoords":[4,7],"endCoords":[4,6]},{"type":"pawnsW","startCoords":[4,4],"endCoords":[4,5]},{"type":"pawnsB","startCoords":[3,7],"endCoords":[3,5]},{"type":"pawnsW","startCoords":[4,5],"endCoords":[3,6],"captured":"pawnsB","enpassant":-1},{"type":"bishopsB","startCoords":[6,8],"endCoords":[3,11]},{"type":"pawnsW","startCoords":[3,6],"endCoords":[2,7],"captured":"pawnsB"},{"type":"bishopsB","startCoords":[3,11],"endCoords":[-4,4]},{"type":"pawnsW","startCoords":[2,7],"endCoords":[1,8],"captured":"rooksB","promotion":"queensW"},{"type":"bishopsB","startCoords":[-4,4],"endCoords":[2,-2],"check":true},{"type":"kingsW","startCoords":[5,1],"endCoords":[4,2]},{"type":"knightsB","startCoords":[7,8],"endCoords":[6,6]},{"type":"queensW","startCoords":[1,8],"endCoords":[2,8],"captured":"knightsB"},{"type":"kingsB","startCoords":[5,8],"endCoords":[7,8],"castle":{"dir":1,"coord":[8,8]}},{"type":"queensW","startCoords":[2,8],"endCoords":[1,7],"captured":"pawnsB"},{"type":"queensB","startCoords":[4,8],"endCoords":[0,4]},{"type":"queensW","startCoords":[1,7],"endCoords":[7,13],"check":true},{"type":"kingsB","startCoords":[7,8],"endCoords":[8,8]},{"type":"queensW","startCoords":[7,13],"endCoords":[7,7],"captured":"pawnsB","check":true},{"type":"kingsB","startCoords":[8,8],"endCoords":[7,7],"captured":"queensW"},{"type":"pawnsW","startCoords":[8,2],"endCoords":[8,4]},{"type":"queensB","startCoords":[0,4],"endCoords":[4,4],"check":true,"mate":true}]}
+    let outputNice = LongToShort_Format(gameExample, compact_moves = 0, make_new_lines = true);
+    console.log("Game in short format with nice moves:\n\n" + outputNice + "\n");
+    let outputMoreCompact = LongToShort_Format(gameExample, compact_moves = 1, make_new_lines = true);
+    console.log("Game in short format with more compact moves:\n\n" + outputMoreCompact + "\n");
+    let outputMostCompact = LongToShort_Format(gameExample, compact_moves = 2, make_new_lines = true);
+    console.log("Game in short format with most compact moves:\n\n" + outputMostCompact + "\n");
 
-// Position after 21 halfmoves:
-let position = GameToPosition(gameExample,21);
-console.log("Position after 21 half moves in long format:\n\n" + JSON.stringify(position));
-// console.log("Position after 21 half moves in short format:\n\n" + LongToShort_Format(position));
+    // Converted back to long format
+    let gameExampleBackToLong = ShortToLong_Format(outputNice);
+    console.log("Converted back to long format:\n\n" + JSON.stringify(gameExampleBackToLong)+ "\n");
+
+    // Position after 21 halfmoves:
+    let position = GameToPosition(gameExample,21);
+    console.log("Position after 21 half moves in long format:\n\n" + JSON.stringify(position));
+    // console.log("Position after 21 half moves in short format:\n\n" + LongToShort_Format(position));
 
 
-// String test:
-console.log('\nTest:\n\n' + JSON.stringify(ShortToLong_Format(' 3,4  3 w 3232098/2319080123213 K3,3+ {\"asdds}sd a\": 2332, "{nest}" : { "nes t2": "233 22" } } [asa: adsdsa] checkmate,asd   ')));
+    // String test:
+    console.log('\nTest:\n\n' + JSON.stringify(ShortToLong_Format(' 3,4  3 w 3232098/2319080123213 K3,3+ {\"asdds}sd a\": 2332, "{nest}" : { "nes t2": "233 22" } } [asa: adsdsa] checkmate,asd   ')));
+
+    // Move conversion
+    console.log('\n'+JSON.stringify(ShortToLong_Move("-23,-1232>2323,3223HA")));
+    console.log(LongToShort_Move(ShortToLong_Move("-23,-1232>2323,3223AM")));
+} catch(e){
+    console.log(e);
+}
