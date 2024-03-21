@@ -734,18 +734,16 @@ function generateSpecialRights(position, pawnDoublePush, castleWith) {
         if (pawnDoublePush && thisPiece.startsWith('pawns')) specialRights[key] = true;
         else if (castleWith && thisPiece.startsWith('kings')) {
             specialRights[key] = true;
-            const color = getPieceColorFromType(thisPiece);
-            kingsFound[key] = color;
+            kingsFound[key] = getPieceColorFromType(thisPiece);
         }
         else if (castleWith && thisPiece.startsWith(castleWith)) {
-            const color = getPieceColorFromType(thisPiece);
-            castleWithsFound[key] = color;
+            castleWithsFound[key] = getPieceColorFromType(thisPiece);
         }
     }
 
     // Only give the pieces that can castle their special move ability
     // if they are the same row and color as a king!
-    if (kingsFound.length === 0) return specialRights; // Nothing can castle, return now.
+    if (Object.keys(kingsFound).length === 0) return specialRights; // Nothing can castle, return now.
     outerFor: for (const coord in castleWithsFound) { // 'x,y':'white'
         const coords = getCoordsFromString(coord); // [x,y]
         for (const kingCoord in kingsFound) { // 'x,y':'white'
@@ -828,3 +826,41 @@ try{
 } catch(e){
     console.log(e);
 }
+
+
+
+
+// const long = {"metadata":{
+//     "Variant":"Classical",
+//     "Version":"1",
+//     "White":"Naviary",
+//     "Black":"(Guest)",
+//     "Clock":"10+5",
+//     "Date":"2024/03/17 13:42:06",
+//     "Result":"0-1",
+//     "Condition":"checkmate"
+// },
+// "turn":"white",
+// "enpassant":[5,3],
+// "moveRule":"0/100",
+// "fullMove": 1,
+
+// "specialRights":{"1,2":true,"2,2":true,"3,2":true,"4,2":true,"5,2":true,"6,2":true,"7,2":true,"8,2":true,"1,7":true,"2,7":true,"3,7":true,"4,7":true,"5,7":true,"6,7":true,"7,7":true,"8,7":true,"1,1":true,"5,1":true,"8,1":true,"1,8":true,"5,8":true,"8,8":true},
+
+// "startingPosition":{"1,2":"pawnsW","2,2":"pawnsW","3,2":"pawnsW","4,2":"pawnsW","5,2":"pawnsW","6,2":"pawnsW","7,2":"pawnsW","8,2":"pawnsW","1,7":"pawnsB","2,7":"pawnsB","3,7":"pawnsB","4,7":"pawnsB","5,7":"pawnsB","6,7":"pawnsB","7,7":"pawnsB","8,7":"pawnsB","1,1":"rooksW","8,1":"rooksW","1,8":"rooksB","8,8":"rooksB","2,1":"knightsW","7,1":"knightsW","2,8":"knightsB","7,8":"knightsB","3,1":"bishopsW","6,1":"bishopsW","3,8":"bishopsB","6,8":"bishopsB","4,1":"queensW","4,8":"queensB","5,1":"kingsW","5,8":"kingsB"},
+
+// "moves":[{"type":"pawnsW","startCoords":[4,2],"endCoords":[4,4]},{"type":"pawnsB","startCoords":[4,7],"endCoords":[4,6]},{"type":"pawnsW","startCoords":[4,4],"endCoords":[4,5]},{"type":"pawnsB","startCoords":[3,7],"endCoords":[3,5]},{"type":"pawnsW","startCoords":[4,5],"endCoords":[3,6],"captured":"pawnsB","enpassant":-1},{"type":"queensB","startCoords":[4,8],"endCoords":[-5,-1]},{"type":"pawnsW","startCoords":[3,6],"endCoords":[2,7],"captured":"pawnsB"},{"type":"bishopsB","startCoords":[6,8],"endCoords":[5,9]},{"type":"pawnsW","startCoords":[2,7],"endCoords":[1,8],"captured":"rooksB","promotion":"queensW"},{"type":"knightsB","startCoords":[7,8],"endCoords":[6,6]},{"type":"queensW","startCoords":[1,8],"endCoords":[2,8],"captured":"knightsB"},{"type":"kingsB","startCoords":[5,8],"endCoords":[7,8],"castle":{"dir":1,"coord":[8,8]}},{"type":"queensW","startCoords":[2,8],"endCoords":[1,7],"captured":"pawnsB"},{"type":"queensB","startCoords":[-5,-1],"endCoords":[5,-1],"check":true},{"type":"rooksW","startCoords":[8,1],"endCoords":[9,1]},{"type":"bishopsB","startCoords":[3,8],"endCoords":[7,-1],"check":true,"mate":true}],
+
+// "gameRules":{
+//     "slideLimit":"Infinity",
+//     "promotionRanks":[8,1],
+//     "promotionsAllowed":{"white":["queens","rooks","bishops","knights"],"black":["queens","rooks","bishops","knights"]},
+//     "winConditions":{"white":["checkmate"],"black":["checkmate","allpiecescaptured"]}}};
+
+// const short = LongToShort_Format(long, 1, true);
+// console.log(short)
+
+// const longagain = ShortToLong_Format(short);
+// // console.log(longagain);
+// // console.log(JSON.stringify(longagain, null, 2));
+// console.log(JSON.stringify(longagain));
