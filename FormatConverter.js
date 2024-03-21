@@ -767,9 +767,9 @@ function getPieceColorFromType(type) {
 }
 
 /**
- * Takes the position in compressed short form and returns the startingPosition and specialMoves properties of the gamefile
+ * Takes the position in compressed short form and returns the startingPosition and specialRights properties of the gamefile
  * @param {string} shortposition - The compressed position of the gamefile (e.g., "K5,4+|P1,2|r500,25389")
- * @returns {object} An object containing 2 properties: startingPosition, and specialMoves
+ * @returns {object} An object containing 2 properties: startingPosition, and specialRights
  */
 function getStartingPositionAndSpecialRightsFromShortPosition(shortposition) {
     const startingPosition = {};
