@@ -377,28 +377,10 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
 
         // position
         if(!longformat["startingPosition"] && /^([a-zA-z]+-?[0-9]+.*)$/.test(string)){
-            longformat["specialRights"] = {};
-            longformat["startingPosition"] = {};
-            string = string.split("|");
-            for (let i=0; i < string.length; i++){
-                if (string[i] == ""){
-                    continue;
-                }
-                let shortpiece = "";
-                while(true){
-                    let current_char = string[i][0];
-                    if (/[a-zA-Z]/g.test(current_char)){
-                        shortpiece = shortpiece + current_char;
-                        string[i] = string[i].slice(1);
-                    } else {
-                        break;
-                    }
-                }
-                if (string[i].slice(-1) == "+"){
-                    longformat["specialRights"][string[i].slice(0,-1)] = true;
-                }
-                longformat["startingPosition"][string[i].replace(/[+]*/g,"")] = ShortToLong_Piece(shortpiece);
-            }
+            const { startingPosition, specialRights } = getStartingPositionAndSpecialRightsFromShortPosition(string);
+            longformat.startingPosition = startingPosition;
+            longformat.specialRights = specialRights;
+
             continue;
         }
 
@@ -782,6 +764,42 @@ function getPieceColorFromType(type) {
     else if (type.endsWith('B')) return "black"
     else if (type.endsWith('N')) return "neutral"
     else throw new Error(`Cannot get color of piece with type "${type}"!`)
+}
+
+/**
+ * Takes the position in compressed short form and returns the startingPosition and specialMoves properties of the gamefile
+ * @param {string} shortposition - The compressed position of the gamefile (e.g., "K5,4+|P1,2|r500,25389")
+ * @returns {object} An object containing 2 properties: startingPosition, and specialMoves
+ */
+function getStartingPositionAndSpecialRightsFromShortPosition(shortposition) {
+    const startingPosition = {};
+    const specialRights = {};
+    let string = shortposition;
+    string = string.split("|");
+    for (let i=0; i < string.length; i++){
+        if (string[i] == ""){
+            continue;
+        }
+        let shortpiece = "";
+        while(true){
+            let current_char = string[i][0];
+            if (/[a-zA-Z]/g.test(current_char)){
+                shortpiece = shortpiece + current_char;
+                string[i] = string[i].slice(1);
+            } else {
+                break;
+            }
+        }
+        if (string[i].slice(-1) == "+"){
+            specialRights[string[i].slice(0,-1)] = true;
+        }
+        startingPosition[string[i].replace(/[+]*/g,"")] = ShortToLong_Piece(shortpiece);
+    }
+
+    return {
+        startingPosition,
+        specialRights
+    }
 }
 
 try{
