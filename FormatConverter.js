@@ -436,9 +436,6 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
                 delete longformat["moves"];
                 return longformat;
             }
-            if (!longformat["startingPosition"]){
-                throw new Error("Moves but no starting position submitted!");
-            }
 
             let runningCoordinates;
             let runningRights;
@@ -446,6 +443,9 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
             let wasBlackDoublePawnMove = false;
             let pawnEndString;
             if (reconstruct_optional_move_flags){
+                if (!longformat["startingPosition"]){
+                    throw new Error("Moves have to be reconstructed but no starting position submitted!");
+                }
                 runningCoordinates = structuredClone(longformat["startingPosition"]);
                 runningRights = (longformat["specialRights"] ? structuredClone(longformat["specialRights"]) : {});
             }
@@ -569,7 +569,6 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
                             }
                             if (castleCandidate == ""){
                                 throw new Error("Error: Castling failed on move "+i);
-                                break;
                             }
                             castle["dir"] = (xmove > 1 ? 1 : -1);
                             castle["coord"] = castleCandidate;
@@ -682,7 +681,7 @@ function GameToPosition(longformat, halfmoves = 0){
 }
 
 /**
- * Converts a single move in JSON format to ICN notation
+ * Converts a single move in JSON format to compact ICN notation
  * @param {object} longmove - Input move in JSON format
  * @returns {string} Output string in compact ICN notation
  */
@@ -692,8 +691,8 @@ function LongToShort_Move(longmove){
 }
 
 /**
- * Converts a single move in ICN notation to JSON format
- * @param {string} shortmove - Input move as string
+ * Converts a single move in compact ICN notation to JSON format
+ * @param {string} shortmove - Input move as string (has to be in compact format!)
  * @returns {object} Output move as JSON
  */
 function ShortToLong_Move(shortmove){
