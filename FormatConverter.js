@@ -479,7 +479,7 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
                         longmove["captured"] = capturedPiece;
                     } else if (movedPiece.slice(0, -1) == "pawns" && startCoords[0] != endCoords[0] && startCoords[1] != endCoords[1]){
                         if (wasWhiteDoublePawnMove || wasBlackDoublePawnMove){
-                            capturedPiece = structuredClone(runningCoordinates[pawnEndString]);
+                            let capturedPiece = structuredClone(runningCoordinates[pawnEndString]);
                             delete runningCoordinates[pawnEndString];
                             delete runningRights[pawnEndString];
                             longmove["captured"] = capturedPiece;
