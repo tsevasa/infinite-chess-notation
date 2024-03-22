@@ -385,7 +385,6 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
             const { startingPosition, specialRights } = getStartingPositionAndSpecialRightsFromShortPosition(string);
             longformat.startingPosition = startingPosition;
             longformat.specialRights = specialRights;
-
             continue;
         }
 
@@ -690,14 +689,13 @@ function LongToShort_Position(position, specialRights = {}) {
     let compressed = "";
     if (!position) return compressed; // undefined position --> no string
     
-    let atleast1Piece = false;
     for (let coordinate in position){
-        atleast1Piece = true;
         compressed += LongToShort_Piece(position[coordinate]) + coordinate;
         if (specialRights[coordinate]) compressed += "+";
         compressed += "|";
     }
-    if (atleast1Piece) compressed = compressed.slice(0, -1); // Trim off the final |
+    
+    if (compressed != "") compressed = compressed.slice(0, -1); // Trim off the final |
     return compressed;
 }
 
@@ -792,13 +790,28 @@ function getStartingPositionAndSpecialRightsFromShortPosition(shortposition) {
     const specialRights = {};
     let string = shortposition;
     string = string.split("|");
+    const letter_regex = /[a-zA-Z]/;
     for (let i=0; i < string.length; i++){
-        if (string[i] == "") continue;
-        let coordString = string[i].match(/-?[0-9]+,-?[0-9]+/);
-        if (string[i].slice(-1) == "+"){
-            specialRights[coordString] = true;
+        let shortpiece = string[i][0];
+        let piecelength = 1;
+        while(true){
+            let current_char = string[i][piecelength];
+            if (!letter_regex.test(current_char)){
+                break;
+            } else {
+                shortpiece += current_char;
+                piecelength++;
+            }
         }
-        startingPosition[coordString] = ShortToLong_Piece(string[i].match(/[a-zA-z]+/));
+        
+        if (string[i].slice(-1) === "+"){
+            const coordString = string[i].slice(piecelength,-1);
+            specialRights[coordString] = true;
+            startingPosition[coordString] = ShortToLong_Piece(shortpiece);
+        } else{
+            startingPosition[string[i].slice(piecelength)] = ShortToLong_Piece(shortpiece);
+        }
+        
     }
 
     return {
@@ -827,7 +840,6 @@ try{
     console.log("Position after 21 half moves in long format:\n\n" + JSON.stringify(position));
     // console.log("Position after 21 half moves in short format:\n\n" + LongToShort_Format(position));
 
-
     // String test:
     console.log('\nTest:\n\n' + JSON.stringify(ShortToLong_Format(' 3,4  3 w 3232098/2319080123213 K3,3+ {"asdds}sd a": 2332, "{nest}" : { "nes t2": "233 22" } } [asa: adsdsa] checkmate,asd   ')) + '\n');
 
@@ -843,8 +855,21 @@ try{
     // Compressing of a variant's starting position, only provided the pawnDoublePush and castleWith gamerules.
     const a = {"1,2": "pawnsW","2,2": "pawnsW","3,2": "pawnsW","4,2": "pawnsW","5,2": "pawnsW","6,2": "pawnsW","7,2": "pawnsW","8,2": "pawnsW","1,7": "pawnsB","2,7": "pawnsB","3,7": "pawnsB","4,7": "pawnsB","5,7": "pawnsB","6,7": "pawnsB","7,7": "pawnsB","8,7": "pawnsB","1,1": "rooksW","8,1": "rooksW","1,8": "rooksB","8,8": "rooksB","2,1": "knightsW","7,1": "knightsW","2,8": "knightsB","7,8": "knightsB","3,1": "bishopsW","6,1": "bishopsW","3,8": "bishopsB","6,8": "bishopsB","4,1": "queensW","4,8": "queensB","5,1": "kingsW","5,8": "kingsB"}
     const b = LongToShort_Position_FromGamerules(a, true, 'rooks');
-    
     console.log(`\n\nCompressing of a variant's starting position example:\n\n${JSON.stringify(b)}`)
+
+    // Speed test, put large position in "longposition.txt"
+    const fs = require('fs');
+    fs.readFile("longposition.txt", (err, data) => {
+        if (err) return;
+        let gameExampleLong = JSON.parse(data);
+        let start_time = Date.now();
+        console.log("\nTimer Start");
+        let outputLong = LongToShort_Format(gameExampleLong, 0, true);
+        let med_time = Date.now();
+        console.log("Long to short: " + (med_time - start_time) / 1000);
+        let outputLong2 = ShortToLong_Format(outputLong, true, true);
+        console.log("Short to long: " +  (Date.now() - med_time) / 1000);
+    });  
     
 } catch(e){
     console.log(e);
