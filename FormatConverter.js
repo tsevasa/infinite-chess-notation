@@ -45,6 +45,11 @@ function ShortToLong_Piece(shortpiece){
     return invertedpieceDictionary[shortpiece];
 }
 
+/**
+ * Checks if a string can be parsed to JSON
+ * @param {string} str - Input string
+ * @returns {boolean} True if string is in JSON format, else false
+ */
 function isJson(str) {
     try {
         JSON.parse(str);
@@ -569,7 +574,7 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
 
 /**
  * Converts a gamefile in JSON format to single position gamefile in JSON format with deleted "moves" object
- * @param {object} shortformatOG - Input gamefile in JSON format
+ * @param {object} longformat - Input gamefile in JSON format
  * @param {number} halfmoves - Number of halfmoves from starting position (Infinity: final position of game)
  * @returns {object} Output gamefile in JSON format
  */
