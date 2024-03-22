@@ -191,46 +191,48 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
 
     // moves
     if (longformat["moves"]){
+        let shortmoves = "";
         for (let i = 0; i < longformat["moves"].length; i++){
             let longmove = longformat["moves"][i];
             if (next_move == "w" && compact_moves == 0){
-                shortformat += (!make_new_lines && i != 0 ? " " : "");
-                shortformat += fullmove.toString() + ". ";
+                shortmoves += (!make_new_lines && i != 0 ? " " : "");
+                shortmoves += fullmove.toString() + ". ";
             } else if (compact_moves == 0){
-                shortformat += (i == 0 ? fullmove.toString() + ".   ...   | " : " | ");
+                shortmoves += (i == 0 ? fullmove.toString() + ".   ...   | " : " | ");
             } else {
-                shortformat += (i == 0 ? "" : "|");
+                shortmoves += (i == 0 ? "" : "|");
             }
-            shortformat += (longmove["type"] && (compact_moves == 0 || compact_moves == 1) ? LongToShort_Piece(longmove["type"]) : "");
-            shortformat += longmove["startCoords"].toString();
-            shortformat += (compact_moves == 0 ? " " : "");
-            shortformat += (longmove["captured"] && (compact_moves == 0 || compact_moves == 1) ? "x" : ">");
-            shortformat += (compact_moves == 0 ? " " : "");
-            shortformat += longmove["endCoords"].toString();
-            shortformat += (compact_moves == 0 ? " " : "");
+            shortmoves += (longmove["type"] && (compact_moves == 0 || compact_moves == 1) ? LongToShort_Piece(longmove["type"]) : "");
+            shortmoves += longmove["startCoords"].toString();
+            shortmoves += (compact_moves == 0 ? " " : "");
+            shortmoves += (longmove["captured"] && (compact_moves == 0 || compact_moves == 1) ? "x" : ">");
+            shortmoves += (compact_moves == 0 ? " " : "");
+            shortmoves += longmove["endCoords"].toString();
+            shortmoves += (compact_moves == 0 ? " " : "");
             if (longmove["promotion"]){
-                shortformat += (compact_moves == 0 || compact_moves == 1? "=" : "");
-                shortformat += LongToShort_Piece(longmove["promotion"]);
+                shortmoves += (compact_moves == 0 || compact_moves == 1? "=" : "");
+                shortmoves += LongToShort_Piece(longmove["promotion"]);
             }
             if (longmove["mate"] && (compact_moves == 0 || compact_moves == 1)){
-                shortformat += "\#";
+                shortmoves += "\#";
             } else if (longmove["check"] && (compact_moves == 0 || compact_moves == 1)){
-                shortformat += "+";
+                shortmoves += "+";
             }
-            shortformat = shortformat.trimEnd();
+            shortmoves = shortmoves.trimEnd();
             if (next_move == "w"){
                 next_move = "b";
             } else{
                 next_move = "w";
                 fullmove += 1;
                 if (i != longformat["moves"].length - 1 && compact_moves == 0){
-                    shortformat += (make_new_lines ? "\n" : " |");
+                    shortmoves += (make_new_lines ? "\n" : " |");
                 }
             }
         }
+        shortformat += shortmoves.trimEnd();
     }
     
-    return shortformat.trimEnd();
+    return shortformat;
 }
 
 /**
@@ -694,7 +696,7 @@ function LongToShort_Position(position, specialRights = {}) {
         if (specialRights[coordinate]) compressed += "+";
         compressed += "|";
     }
-    
+
     if (compressed != "") compressed = compressed.slice(0, -1); // Trim off the final |
     return compressed;
 }
@@ -862,12 +864,12 @@ try{
     fs.readFile("longposition.txt", (err, data) => {
         if (err) return;
         let gameExampleLong = JSON.parse(data);
+        console.log("\nTimer Start with " + Object.keys(gameExampleLong.startingPosition).length + " pieces and " + gameExampleLong.moves.length + " moves.");
         let start_time = Date.now();
-        console.log("\nTimer Start");
         let outputLong = LongToShort_Format(gameExampleLong, 0, true);
         let med_time = Date.now();
         console.log("Long to short: " + (med_time - start_time) / 1000);
-        let outputLong2 = ShortToLong_Format(outputLong, true, true);
+        ShortToLong_Format(outputLong, false, true);
         console.log("Short to long: " +  (Date.now() - med_time) / 1000);
     });  
     
