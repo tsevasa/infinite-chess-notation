@@ -197,11 +197,11 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
                 shortformat += (i == 0 ? "" : "|");
             }
             shortformat += (longmove["type"] && (compact_moves == 0 || compact_moves == 1) ? LongToShort_Piece(longmove["type"]) : "");
-            shortformat += longmove["startCoords"][0].toString()+ "," + longmove["startCoords"][1].toString();
+            shortformat += longmove["startCoords"].toString();
             shortformat += (compact_moves == 0 ? " " : "");
             shortformat += (longmove["captured"] && (compact_moves == 0 || compact_moves == 1) ? "x" : ">");
             shortformat += (compact_moves == 0 ? " " : "");
-            shortformat += longmove["endCoords"][0].toString()+ "," + longmove["endCoords"][1].toString();
+            shortformat += longmove["endCoords"].toString();
             shortformat += (compact_moves == 0 ? " " : "");
             if (longmove["promotion"]){
                 shortformat += (compact_moves == 0 || compact_moves == 1? "=" : "");
@@ -376,7 +376,7 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
         }
 
         // position
-        if(!longformat["startingPosition"] && /^([a-zA-z]+-?[0-9]+.*)$/.test(string)){
+        if(!longformat["startingPosition"] && /^([a-zA-z]+-?[0-9]+,-?[0-9]+.*)$/.test(string)){
             const { startingPosition, specialRights } = getStartingPositionAndSpecialRightsFromShortPosition(string);
             longformat.startingPosition = startingPosition;
             longformat.specialRights = specialRights;
@@ -447,7 +447,7 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
 
                 let isPromotion = false;
                 suffix = suffix.replace(/(\+|\{.*\}|\(.*\))/g,""); // discard comments in (), {}
-                let promotedPiece = ( /[a-zA-Z]/.test(suffix) ? suffix.match(/[a-zA-Z]/g).toString().replace(/[,\s]/g,"") : "");
+                let promotedPiece = ( /[a-zA-Z]+/.test(suffix) ? suffix.match(/[a-zA-Z]+/g).toString().replace(/[,\s]/g,"") : "");
                 if (promotedPiece != ""){
                     isPromotion = true;
                     promotedPiece = ShortToLong_Piece(promotedPiece);
@@ -541,7 +541,7 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
                             castle["dir"] = (xmove > 1 ? 1 : -1);
                             castle["coord"] = castleCandidate;
                             longmove["castle"] = castle;
-                            let castleString = castleCandidate[0].toString() + "," + castleCandidate[1].toString();
+                            let castleString = castleCandidate.toString();
                             runningCoordinates[(parseInt(endCoords[0])-castle["dir"]).toString() + "," + endCoords[1].toString()] = structuredClone(runningCoordinates[castleString]);
                             delete runningCoordinates[castleString];
                             delete runningRights[castleString];
@@ -592,8 +592,8 @@ function GameToPosition(longformat, halfmoves = 0){
             ret["fullMove"] += 1;
         }
 
-        let startString = move["startCoords"][0].toString() + "," + move["startCoords"][1].toString();
-        let endString = move["endCoords"][0].toString() + "," + move["endCoords"][1].toString();
+        let startString = move["startCoords"].toString();
+        let endString = move["endCoords"].toString();
 
         // update coordinates in starting position
         if (move["promotion"]){
@@ -752,7 +752,6 @@ function generateSpecialRights(position, pawnDoublePush, castleWith) {
             continue outerFor;
         }
     }
-
     return specialRights;
 }
 
@@ -789,23 +788,12 @@ function getStartingPositionAndSpecialRightsFromShortPosition(shortposition) {
     let string = shortposition;
     string = string.split("|");
     for (let i=0; i < string.length; i++){
-        if (string[i] == ""){
-            continue;
-        }
-        let shortpiece = "";
-        while(true){
-            let current_char = string[i][0];
-            if (/[a-zA-Z]/g.test(current_char)){
-                shortpiece = shortpiece + current_char;
-                string[i] = string[i].slice(1);
-            } else {
-                break;
-            }
-        }
+        if (string[i] == "") continue;
+        let coordString = string[i].match(/-?[0-9]+,-?[0-9]+/);
         if (string[i].slice(-1) == "+"){
-            specialRights[string[i].slice(0,-1)] = true;
+            specialRights[coordString] = true;
         }
-        startingPosition[string[i].replace(/[+]*/g,"")] = ShortToLong_Piece(shortpiece);
+        startingPosition[coordString] = ShortToLong_Piece(string[i].match(/[a-zA-z]+/));
     }
 
     return {
