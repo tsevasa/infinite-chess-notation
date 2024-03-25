@@ -420,6 +420,11 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
                 if (!longformat["startingPosition"]){
                     throw new Error("Moves have to be reconstructed but no starting position submitted!");
                 }
+                
+                if (longformat["enpassant"]){
+                    pawnEndString = longformat["enpassant"].toString();
+                    wasBlackDoublePawnMove = true;
+                }
             }
 
             for (let i = 0; i < shortmoves.length; i++){
