@@ -386,8 +386,8 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
         // position
         if(!longformat["startingPosition"] && /^([a-zA-z]+-?[0-9]+,-?[0-9]+.*)$/.test(string)){
             const { startingPosition, specialRights } = getStartingPositionAndSpecialRightsFromShortPosition(string);
-            longformat.startingPosition = startingPosition;
-            longformat.specialRights = specialRights;
+            longformat["specialRights"] = specialRights;
+            longformat["startingPosition"] = startingPosition;
             continue;
         }
 
@@ -791,29 +791,33 @@ function getPieceColorFromType(type) {
 function getStartingPositionAndSpecialRightsFromShortPosition(shortposition) {
     const startingPosition = {};
     const specialRights = {};
-    let string = shortposition.split("|");
     const letter_regex = /[a-zA-Z]/;
-    for (let i=0; i < string.length; i++){
-        let shortpiece = string[i][0];
+    const MAX_INDEX = shortposition.length - 1;
+    let index = 0;
+    let end_index = 0;
+    while(index < MAX_INDEX && end_index != -1){
+        let shortpiece = shortposition[index];
         let piecelength = 1;
         while(true){
-            let current_char = string[i][piecelength];
-            if (!letter_regex.test(current_char)){
-                break;
-            } else {
+            let current_char = shortposition[index + piecelength];
+            if (letter_regex.test(current_char)){
                 shortpiece += current_char;
                 piecelength++;
+            } else {
+                break;
             }
         }
-        
-        if (string[i].slice(-1) === "+"){
-            const coordString = string[i].slice(piecelength,-1);
-            specialRights[coordString] = true;
+        end_index = shortposition.slice(index).search(/\+|\|/);
+        if (end_index != -1) end_index += index;
+        if (shortposition[end_index] == "+"){
+            let coordString = shortposition.slice(index + piecelength, end_index);
             startingPosition[coordString] = ShortToLong_Piece(shortpiece);
+            specialRights[coordString] = true;
+            index = end_index+2;
         } else{
-            startingPosition[string[i].slice(piecelength)] = ShortToLong_Piece(shortpiece);
+            startingPosition[shortposition.slice(index + piecelength, end_index)] = ShortToLong_Piece(shortpiece);
+            index = end_index + 1;
         }
-        
     }
 
     return {
