@@ -807,23 +807,29 @@ function getStartingPositionAndSpecialRightsFromShortPosition(shortposition) {
                 break;
             }
         }
-        end_index = shortposition.slice(index).search(/\+|\|/);
-        if (end_index != -1) end_index += index;
-        if (shortposition[end_index] == "+"){
-            let coordString = shortposition.slice(index + piecelength, end_index);
-            startingPosition[coordString] = ShortToLong_Piece(shortpiece);
-            specialRights[coordString] = true;
-            index = end_index+2;
+        end_index = shortposition.slice(index).search(/\+|\|/); // end of current piece coordinates, counted from index
+        if (end_index != -1){
+            if (shortposition[index + end_index] == "+"){
+                let coordString = shortposition.slice(index + piecelength, index + end_index);
+                startingPosition[coordString] = ShortToLong_Piece(shortpiece);
+                specialRights[coordString] = true;
+                index += end_index+2;
+            } else{
+                startingPosition[shortposition.slice(index + piecelength, index + end_index)] = ShortToLong_Piece(shortpiece);
+                index += end_index + 1;
+            }
         } else{
-            startingPosition[shortposition.slice(index + piecelength, end_index)] = ShortToLong_Piece(shortpiece);
-            index = end_index + 1;
+            if (shortposition.slice(-1) == "+"){
+                let coordString = shortposition.slice(index + piecelength, -1);
+                startingPosition[coordString] = ShortToLong_Piece(shortpiece);
+                specialRights[coordString] = true;
+            } else{
+                startingPosition[shortposition.slice(index + piecelength)] = ShortToLong_Piece(shortpiece);
+            }
         }
     }
 
-    return {
-        startingPosition,
-        specialRights
-    }
+    return {startingPosition, specialRights}
 }
 
 try{
