@@ -793,7 +793,7 @@ function getStartingPositionAndSpecialRightsFromShortPosition(shortposition) {
     const MAX_INDEX = shortposition.length - 1;
     let index = 0;
     let end_index = 0;
-    while(index < MAX_INDEX && end_index != -1){
+    while(index < MAX_INDEX){
         let shortpiece = shortposition[index];
         let piecelength = 1;
         while(true){
@@ -811,7 +811,7 @@ function getStartingPositionAndSpecialRightsFromShortPosition(shortposition) {
                 let coordString = shortposition.slice(index + piecelength, index + end_index);
                 startingPosition[coordString] = ShortToLong_Piece(shortpiece);
                 specialRights[coordString] = true;
-                index += end_index+2;
+                index += end_index + 2;
             } else{
                 startingPosition[shortposition.slice(index + piecelength, index + end_index)] = ShortToLong_Piece(shortpiece);
                 index += end_index + 1;
@@ -821,8 +821,10 @@ function getStartingPositionAndSpecialRightsFromShortPosition(shortposition) {
                 let coordString = shortposition.slice(index + piecelength, -1);
                 startingPosition[coordString] = ShortToLong_Piece(shortpiece);
                 specialRights[coordString] = true;
+                index = MAX_INDEX;
             } else{
                 startingPosition[shortposition.slice(index + piecelength)] = ShortToLong_Piece(shortpiece);
+                index = MAX_INDEX;
             }
         }
     }
