@@ -386,7 +386,7 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
         // position
         if(!longformat["startingPosition"] && /^([a-zA-z]+-?[0-9]+,-?[0-9]+.*)$/.test(string)){
             const { startingPosition, specialRights } = getStartingPositionAndSpecialRightsFromShortPosition(string);
-            longformat["specialRights"] = specialRights;
+            if (Object.keys(specialRights).length > 0) longformat["specialRights"] = specialRights;
             longformat["startingPosition"] = startingPosition;
             continue;
         }
@@ -626,7 +626,7 @@ function GameToPosition(longformat, halfmoves = 0, modify_input = false){
         // delete captured piece en passant
         if(move["enpassant"]){
             delete ret["startingPosition"][enpassantcoordinates];
-            delete ret["specialRights"][enpassantcoordinates];
+            if (ret["specialRights"]) delete ret["specialRights"][enpassantcoordinates];
         }
 
         // update en passant
@@ -641,9 +641,7 @@ function GameToPosition(longformat, halfmoves = 0, modify_input = false){
             let castleString = move["castle"]["coord"][0].toString() + "," + move["castle"]["coord"][1].toString();
             ret["startingPosition"][`${(parseInt(move["endCoords"][0])-move["castle"]["dir"]).toString()},${move["endCoords"][1].toString()}`] = `${ret["startingPosition"][castleString]}`;
             delete ret["startingPosition"][castleString];
-            if (ret["specialRights"]){
-                delete ret["specialRights"][castleString];
-            }
+            if (ret["specialRights"]) delete ret["specialRights"][castleString];
         }
 
         // save move coords for potential en passant
