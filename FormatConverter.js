@@ -73,7 +73,7 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
     let whitespace = (make_new_lines ? "\n" : " ");
     // metadata
     for (let key in longformat["metadata"]){
-        shortformat += "[" + key + ": " + longformat["metadata"][key] + "]" + whitespace;
+        shortformat += `[${key}: ${longformat["metadata"][key]}]${whitespace}`;
     }
     if (longformat["metadata"]){
         shortformat += whitespace;
@@ -91,18 +91,18 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
 
     // en passant
     if(longformat["enpassant"]){
-        shortformat += longformat["enpassant"].toString() + " ";
+        shortformat += `${longformat["enpassant"].toString()} `;
     }
 
     // X move rule
     if(longformat["moveRule"]){
-        shortformat += longformat["moveRule"].toString() + " ";
+        shortformat += `${longformat["moveRule"].toString()} `;
     }
 
     // full move counter
     let fullmove = 1;
     if(longformat["fullMove"]){
-        shortformat += longformat["fullMove"].toString() + " ";
+        shortformat += `${longformat["fullMove"].toString()} `;
         fullmove = parseInt(longformat["fullMove"]);
     }
 
@@ -117,7 +117,7 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
                     if (!(promotionListWhite.length == 4 && promotionListWhite.includes("rooks") && promotionListWhite.includes("queens") && promotionListWhite.includes("bishops") && promotionListWhite.includes("knights"))){
                         shortformat += ";";
                         for (let longpiece of promotionListWhite){
-                            shortformat += LongToShort_Piece(longpiece + "W") + ",";
+                            shortformat += `${LongToShort_Piece(longpiece + "W")},`;
                         }
                         shortformat = shortformat.slice(0, -1);
                     }
@@ -131,7 +131,7 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
                     if (!(promotionListBlack.length == 4 && promotionListBlack.includes("rooks") && promotionListBlack.includes("queens") && promotionListBlack.includes("bishops") && promotionListBlack.includes("knights"))){
                         shortformat += ";";
                         for (let longpiece of promotionListBlack){
-                            shortformat += LongToShort_Piece(longpiece + "B") + ",";
+                            shortformat += `${LongToShort_Piece(longpiece + "B")},`;
                         }
                         shortformat = shortformat.slice(0, -1);
                     }
@@ -166,9 +166,9 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
                 }
                 
                 if (wins_are_equal){
-                    shortformat += whitewins.toString() + " ";
+                    shortformat += `${whitewins.toString()} `;
                 } else{
-                    shortformat += "(" + whitewins.toString() + "|" + blackwins.toString() + ") ";
+                    shortformat += `(${whitewins.toString()}|${blackwins.toString()}) `;
                 }
 
             }
@@ -184,12 +184,12 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
         added_extras = true;
     }
     if (added_extras) {
-        shortformat += JSON.stringify(extraGameRules) + " ";
+        shortformat += `${JSON.stringify(extraGameRules)} `;
     }
 
     // position
     shortformat += LongToShort_Position(longformat.startingPosition, longformat.specialRights);
-    if (longformat.moves) shortformat += whitespace + whitespace; // Add more spacing for the next part
+    if (longformat["moves"]) shortformat += `${whitespace}${whitespace}`; // Add more spacing for the next part
 
     // moves
     if (longformat["moves"]){
@@ -239,14 +239,13 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
 
 /**
  * Converts a string in Infinite Chess Notation to gamefile in JSON format
- * @param {string} shortformatOG - A string in ICN
+ * @param {string} shortformat - A string in ICN
  * @param {boolean} reconstruct_optional_move_flags - If true, method will reconstruct "type", "captured", "enpassant" and "castle" flags of moves
  * @param {boolean} trust_check_and_mate_symbols - If true, method will set "check" and "mate" flags of moves based on + and # symbols
  * @returns {object} Equivalent gamefile in JSON format
  */
-function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = true, trust_check_and_mate_symbols = true){
+function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true, trust_check_and_mate_symbols = true){
     let longformat = {};
-    let shortformat = structuredClone(shortformatOG);
 
     // metadata handling. Don't put ": " in metadata fields.
     let metadata = {};
@@ -257,7 +256,7 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
             throw new Error("Unclosed [ detected");
         }
         let metadatastring = shortformat.slice(start_index+1,end_index);
-        shortformat = shortformat.slice(0,start_index) + shortformat.slice(end_index+1);
+        shortformat = `${shortformat.slice(0,start_index)}${shortformat.slice(end_index+1)}`;
         
         let split_index = metadatastring.indexOf(": ");
         if (split_index > -1){
@@ -338,8 +337,8 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
             }
         }
 
-        // win condition (has to be at least three letters long)
-        if(/^(\(?[a-zA-z][a-zA-z][a-zA-z].*)$/.test(string)){
+        // win condition (has to start with a letter and not include numbers)
+        if(/^(\(?[a-zA-z][^0-9]*)$/.test(string)){
             if (!longformat["gameRules"]){
                 longformat["gameRules"] = {};
             }
@@ -373,13 +372,13 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
                 if (index_loc == -1){
                     index_loc = shortformat.length;
                 }
-                string = string + shortformat.slice(0,index_loc+1);
+                string += shortformat.slice(0,index_loc+1);
                 shortformat = shortformat.slice(index_loc+1);
             }
-            const parsed = JSON.parse(string);
-            if (!longformat.gameRules) longformat.gameRules = parsed;
-            else for (const key in parsed) {
-                longformat.gameRules[key] = parsed[key];
+            let parsed = JSON.parse(string);
+            if (!longformat["gameRules"]) longformat["gameRules"] = parsed;
+            else for (let key in parsed) {
+                longformat["gameRules"][key] = parsed[key];
             }
             continue;
         }
@@ -413,8 +412,7 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
                 return longformat;
             }
 
-            let runningCoordinates;
-            let runningRights;
+            let runningCoordinates = {}; // contains current piece type at coordinates, and "undefined" if piece no longer on that square
             let wasWhiteDoublePawnMove = false;
             let wasBlackDoublePawnMove = false;
             let pawnEndString;
@@ -422,21 +420,15 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
                 if (!longformat["startingPosition"]){
                     throw new Error("Moves have to be reconstructed but no starting position submitted!");
                 }
-                runningCoordinates = structuredClone(longformat["startingPosition"]);
-                runningRights = (longformat["specialRights"] ? structuredClone(longformat["specialRights"]) : {});
             }
 
             for (let i = 0; i < shortmoves.length; i++){
                 let longmove = {};
                 let coords = shortmoves[i].match(/-?[0-9]+,-?[0-9]+/g);
                 let startString = coords[0];
-                let startCoords = startString.split(",");
-                startCoords[0] = parseInt(startCoords[0]);
-                startCoords[1] = parseInt(startCoords[1]);
                 let endString = coords[1];
-                let endCoords = endString.split(",");
-                endCoords[0] = parseInt(endCoords[0]);
-                endCoords[1] = parseInt(endCoords[1]);
+                let startCoords = getCoordsFromString(startString);
+                let endCoords = getCoordsFromString(endString);
 
                 let suffix_index = shortmoves[i].lastIndexOf(endString) + endString.length;
                 let suffix = shortmoves[i].slice(suffix_index).trimStart().trimEnd();
@@ -454,8 +446,8 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
                 }
 
                 let isPromotion = false;
-                suffix = suffix.replace(/(\+|\{.*\}|\(.*\))/g,""); // discard comments in (), {}
-                let promotedPiece = ( /[a-zA-Z]+/.test(suffix) ? suffix.match(/[a-zA-Z]+/g).toString().replace(/[,\s]/g,"") : "");
+                suffix = suffix.replace(/(\{.*\}|\(.*\))/g,""); // discard comments in (), {}
+                let promotedPiece = ( /[a-zA-Z]+/.test(suffix) ? suffix.match(/[a-zA-Z]+/) : "");
                 if (promotedPiece != ""){
                     isPromotion = true;
                     promotedPiece = ShortToLong_Piece(promotedPiece);
@@ -463,10 +455,13 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
 
                 let movedPiece;
                 if (reconstruct_optional_move_flags){
-                    movedPiece = structuredClone(runningCoordinates[startString]);
+                    if (runningCoordinates[startString]){
+                        movedPiece =`${runningCoordinates[startString]}`;
+                    } else{
+                        movedPiece =`${longformat["startingPosition"][startString]}`;
+                    }
+                    runningCoordinates[startString] = undefined;
                     longmove["type"] = movedPiece;
-                    delete runningCoordinates[startString];
-                    delete runningRights[startString];
                 }
                 
                 longmove["startCoords"] = startCoords;
@@ -474,16 +469,21 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
 
                 // capture and en passant handling
                 if (reconstruct_optional_move_flags){
+                    let capturedPiece;
                     if(runningCoordinates[endString]){
-                        let capturedPiece = structuredClone(runningCoordinates[endString]);
-                        delete runningCoordinates[endString];
-                        delete runningRights[endString];
+                        capturedPiece = `${runningCoordinates[endString]}`;
+                        longmove["captured"] = capturedPiece;
+                    } else if (longformat["startingPosition"][endString] && !(endString in runningCoordinates)){
+                        capturedPiece = `${longformat["startingPosition"][endString]}`;
                         longmove["captured"] = capturedPiece;
                     } else if (movedPiece.slice(0, -1) == "pawns" && startCoords[0] != endCoords[0] && startCoords[1] != endCoords[1]){
                         if (wasWhiteDoublePawnMove || wasBlackDoublePawnMove){
-                            let capturedPiece = structuredClone(runningCoordinates[pawnEndString]);
-                            delete runningCoordinates[pawnEndString];
-                            delete runningRights[pawnEndString];
+                            if (runningCoordinates[pawnEndString]){
+                                capturedPiece = `${runningCoordinates[pawnEndString]}`;
+                            } else {
+                                capturedPiece = `${longformat["startingPosition"][pawnEndString]}`;
+                            }
+                            runningCoordinates[pawnEndString] = undefined;
                             longmove["captured"] = capturedPiece;
                             longmove["enpassant"] = (wasWhiteDoublePawnMove ? 1 : -1);
                         } else{
@@ -506,11 +506,11 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
                         if (startCoords[1] - endCoords[1] < -1){
                             wasWhiteDoublePawnMove = true;
                             wasBlackDoublePawnMove = false;
-                            pawnEndString = structuredClone(endString);
+                            pawnEndString = `${endString}`;
                         } else if (startCoords[1] - endCoords[1] > 1){
                             wasWhiteDoublePawnMove = false;
                             wasBlackDoublePawnMove = true;
-                            pawnEndString = structuredClone(endString);
+                            pawnEndString = `${endString}`;
                         } else{
                             wasWhiteDoublePawnMove = false;
                             wasBlackDoublePawnMove = false;
@@ -525,12 +525,10 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
                         if (xmove > 1 || xmove < -1){
                             let castle = {};
                             let castleCandidate = "";
-                            for (let coordinate in runningRights){
-                                let coordinateVec = coordinate.split(",");
-                                coordinateVec[0] = parseInt(coordinateVec[0]);
-                                coordinateVec[1] = parseInt(coordinateVec[1]);
-                                if (runningRights[coordinate] && runningCoordinates[coordinate]){
-                                    if (coordinateVec[1] == startCoords[1]){
+                            for (let coordinate in longformat["specialRights"]){
+                                if (longformat["startingPosition"][coordinate]  && !(coordinate in runningCoordinates)){ // can only castle if unmoved in this game
+                                    let coordinateVec = getCoordsFromString(coordinate);
+                                    if (coordinateVec[1] == startCoords[1]){ // can only castle if same y coordinate
                                         if ((coordinateVec[0] > startCoords[0] && xmove > 1) || (coordinateVec[0] < startCoords[0] && xmove < 1)) {
                                             if (castleCandidate == ""){
                                                 castleCandidate = coordinateVec;
@@ -550,9 +548,8 @@ function ShortToLong_Format(shortformatOG, reconstruct_optional_move_flags = tru
                             castle["coord"] = castleCandidate;
                             longmove["castle"] = castle;
                             let castleString = castleCandidate.toString();
-                            runningCoordinates[(parseInt(endCoords[0])-castle["dir"]).toString() + "," + endCoords[1].toString()] = structuredClone(runningCoordinates[castleString]);
-                            delete runningCoordinates[castleString];
-                            delete runningRights[castleString];
+                            runningCoordinates[`${(parseInt(endCoords[0])-castle["dir"]).toString()},${endCoords[1].toString()}`] = `${longformat["startingPosition"][castleString]}`;
+                            runningCoordinates[castleString] = undefined;
                         }
                     }
                 }
@@ -605,9 +602,9 @@ function GameToPosition(longformat, halfmoves = 0){
 
         // update coordinates in starting position
         if (move["promotion"]){
-            ret["startingPosition"][endString] = structuredClone(move["promotion"]);
+            ret["startingPosition"][endString] = `${move["promotion"]}`;
         } else{
-            ret["startingPosition"][endString] = structuredClone(ret["startingPosition"][startString]);
+            ret["startingPosition"][endString] = `${ret["startingPosition"][startString]}`;
         }
         delete ret["startingPosition"][startString];
         if (ret["specialRights"]){
@@ -633,7 +630,7 @@ function GameToPosition(longformat, halfmoves = 0){
 
         // update en passant
         if (move["type"].slice(0, -1) == "pawns" && Math.abs(move["startCoords"][1] - move["endCoords"][1]) > 1 ){
-            ret["enpassant"] = move["endCoords"][0].toString() + "," + Math.round(0.5*(move["startCoords"][1] + move["endCoords"][1])).toString();
+            ret["enpassant"] = [move["endCoords"][0], Math.round(0.5*(move["startCoords"][1] + move["endCoords"][1]))];
         } else{
             delete ret["enpassant"];
         }
@@ -641,7 +638,7 @@ function GameToPosition(longformat, halfmoves = 0){
         // update coords of castled piece
         if (move["castle"]){
             let castleString = move["castle"]["coord"][0].toString() + "," + move["castle"]["coord"][1].toString();
-            ret["startingPosition"][(parseInt(move["endCoords"][0])-move["castle"]["dir"]).toString() + "," + move["endCoords"][1].toString()] = structuredClone(ret["startingPosition"][castleString]);
+            ret["startingPosition"][`${(parseInt(move["endCoords"][0])-move["castle"]["dir"]).toString()},${move["endCoords"][1].toString()}`] = `${ret["startingPosition"][castleString]}`;
             delete ret["startingPosition"][castleString];
             if (ret["specialRights"]){
                 delete ret["specialRights"][castleString];
@@ -663,7 +660,7 @@ function GameToPosition(longformat, halfmoves = 0){
  */
 function LongToShort_CompactMove(longmove){
     let promotedPiece = (longmove["promotion"] ? LongToShort_Piece(longmove["promotion"]) : "");
-    return longmove["startCoords"].toString() + ">" + longmove["endCoords"].toString() + promotedPiece;
+    return `${longmove["startCoords"].toString()}>${longmove["endCoords"].toString()}${promotedPiece}`;
 }
 
 /**
@@ -673,7 +670,7 @@ function LongToShort_CompactMove(longmove){
  */
 function ShortToLong_CompactMove(shortmove){
     let coords = shortmove.match(/-?[0-9]+,-?[0-9]+/g);
-    let promotedPiece = (/[a-zA-Z]+/.test(shortmove) ? ShortToLong_Piece(shortmove.match(/[a-zA-Z]+/g)) : "");
+    let promotedPiece = (/[a-zA-Z]+/.test(shortmove) ? ShortToLong_Piece(shortmove.match(/[a-zA-Z]+/)) : "");
     let longmove = {};
     longmove["startCoords"] = coords[0];
     longmove["endCoords"] = coords[1];
@@ -690,17 +687,18 @@ function ShortToLong_CompactMove(shortmove){
  * @returns {string} The position of the game in compressed form, where each piece with a + has its special move ability
  */
 function LongToShort_Position(position, specialRights = {}) {
-    let compressed = "";
-    if (!position) return compressed; // undefined position --> no string
-    
+    let shortposition = "";
+    if (!position) return shortposition; // undefined position --> no string
     for (let coordinate in position){
-        compressed += LongToShort_Piece(position[coordinate]) + coordinate;
-        if (specialRights[coordinate]) compressed += "+";
-        compressed += "|";
+        if (specialRights[coordinate]){
+            shortposition += `${LongToShort_Piece(position[coordinate])}${coordinate}+|`;
+        } else {
+            shortposition += `${LongToShort_Piece(position[coordinate])}${coordinate}|`;
+        }
     }
 
-    if (compressed != "") compressed = compressed.slice(0, -1); // Trim off the final |
-    return compressed;
+    if (shortposition.length != 0) shortposition = shortposition.slice(0,-1); // Trim off the final |
+    return shortposition;
 }
 
 /**
@@ -792,8 +790,7 @@ function getPieceColorFromType(type) {
 function getStartingPositionAndSpecialRightsFromShortPosition(shortposition) {
     const startingPosition = {};
     const specialRights = {};
-    let string = shortposition;
-    string = string.split("|");
+    let string = shortposition.split("|");
     const letter_regex = /[a-zA-Z]/;
     for (let i=0; i < string.length; i++){
         let shortpiece = string[i][0];
@@ -862,7 +859,7 @@ try{
     console.log(`\n\nCompressing of a variant's starting position example:\n\n${JSON.stringify(b)}`)
 
     // Speed test, put large position in "longposition.txt"
-    const fs = require('fs');
+    const fs = require('fs'); // supported in NodeJS
     fs.readFile("longposition.txt", (err, data) => {
         if (err) return;
         const gameExampleLong = JSON.parse(data);
@@ -871,10 +868,9 @@ try{
         const outputLong = LongToShort_Format(gameExampleLong, 0, true);
         const med_time = Date.now();
         console.log("Long to short: " + (med_time - start_time) / 1000);
-        ShortToLong_Format(outputLong, false, true);
+        ShortToLong_Format(outputLong, true, true);
         console.log("Short to long: " +  (Date.now() - med_time) / 1000);
-    });  
-    
+    });
 } catch(e){
     console.log(e);
 }
