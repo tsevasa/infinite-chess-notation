@@ -576,13 +576,14 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
  * Converts a gamefile in JSON format to single position gamefile in JSON format with deleted "moves" object
  * @param {object} longformat - Input gamefile in JSON format
  * @param {number} halfmoves - Number of halfmoves from starting position (Infinity: final position of game)
+ * @param {boolean} modify_input - If false, a new object is created and returned. If true, the input object is modified (which is faster)
  * @returns {object} Output gamefile in JSON format
  */
-function GameToPosition(longformat, halfmoves = 0){
+function GameToPosition(longformat, halfmoves = 0, modify_input = false){
     if(!longformat["moves"]){
         return longformat;
     }
-    let ret = structuredClone(longformat);
+    let ret = modify_input ? longformat : structuredClone(longformat);
     let enpassantcoordinates = (ret["enpassant"] ? ret["enpassant"] : "");
     for (let i = 0; i < Math.min(halfmoves, ret["moves"].length); i++){
         let move = ret["moves"][i];
@@ -616,9 +617,9 @@ function GameToPosition(longformat, halfmoves = 0){
         if (ret["moveRule"]){
             let slashindex = ret["moveRule"].indexOf("/");
             if(move["captured"] || move["type"].slice(0, -1) == "pawns"){
-                ret["moveRule"] = "0/" + ret["moveRule"].slice(slashindex+1);
+                ret["moveRule"] = `0/${ret["moveRule"].slice(slashindex+1)}`;
             } else{
-                ret["moveRule"] = (parseInt(ret["moveRule"].slice(0,slashindex))+1).toString() + "/" + ret["moveRule"].slice(slashindex+1);
+                ret["moveRule"] = `${(parseInt(ret["moveRule"].slice(0,slashindex))+1).toString()}/${ret["moveRule"].slice(slashindex+1)}`;
             }
         }
 
@@ -837,7 +838,7 @@ try{
     console.log("Converted back to long format:\n\n" + JSON.stringify(gameExampleBackToLong)+ "\n");
 
     // Position after 21 halfmoves:
-    const position = GameToPosition(gameExample,21);
+    const position = GameToPosition(gameExample, 21, false);
     console.log("Position after 21 half moves in long format:\n\n" + JSON.stringify(position));
     // console.log("Position after 21 half moves in short format:\n\n" + LongToShort_Format(position));
 
