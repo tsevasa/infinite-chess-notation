@@ -189,6 +189,13 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
 
     // position
     shortformat += LongToShort_Position(longformat.startingPosition, longformat.specialRights);
+
+    // position
+    if (isStartingPositionInLongFormat(longformat.startingPosition)) {
+        shortformat += LongToShort_Position(longformat.startingPosition, longformat.specialRights);
+    } else { // Already in short format!
+        shortformat += longformat.startingPosition
+    }
     if (longformat["moves"]) shortformat += `${whitespace}${whitespace}`; // Add more spacing for the next part
 
     // moves
@@ -835,6 +842,15 @@ function getStartingPositionAndSpecialRightsFromShortPosition(shortposition) {
     }
 
     return {startingPosition, specialRights}
+}
+
+/**
+ * Tests if the provided startingPosition is in long (json) format.
+ * @param {object | string} startingPosition - The startingPosition to test
+ * @returns {boolean} *true* if the startingPosition is in long (json) format
+ */
+function isStartingPositionInLongFormat(startingPosition) {
+    return typeof startingPosition !== 'string';
 }
 
 try{
