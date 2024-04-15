@@ -166,7 +166,7 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
                 }
                 
                 if (wins_are_equal){
-                    shortformat += `${whitewins.toString()} `;
+                    if (whitewins[0] !== 'checkmate') shortformat += `${whitewins.toString()} `;
                 } else{
                     shortformat += `(${whitewins.toString()}|${blackwins.toString()}) `;
                 }
