@@ -188,9 +188,6 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
     }
 
     // position
-    shortformat += LongToShort_Position(longformat.startingPosition, longformat.specialRights);
-
-    // position
     if (isStartingPositionInLongFormat(longformat.startingPosition)) {
         shortformat += LongToShort_Position(longformat.startingPosition, longformat.specialRights);
     } else { // Already in short format!
