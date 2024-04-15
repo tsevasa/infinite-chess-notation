@@ -73,7 +73,7 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
     let whitespace = (make_new_lines ? "\n" : " ");
     // metadata
     for (let key in longformat["metadata"]){
-        shortformat += `[${key}: ${longformat["metadata"][key]}]${whitespace}`;
+        if (longformat.metadata[key] != null) shortformat += `[${key}: ${longformat["metadata"][key]}]${whitespace}`;
     }
     if (longformat["metadata"]){
         shortformat += whitespace;
