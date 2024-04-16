@@ -250,6 +250,7 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
  */
 function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true, trust_check_and_mate_symbols = true){
     let longformat = {};
+    longformat.gameRules = {};
 
     // metadata handling. Don't put ": " in metadata fields.
     let metadata = {};
@@ -310,9 +311,6 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
 
         // promotion lines
         if(/^((\(-?[0-9]+.*\|.*\))|(\(.*\|-?[0-9]+.*\))|(\(\|\)))$/.test(string)){
-            if (!longformat["gameRules"]){
-                longformat["gameRules"] = {};
-            }
             if (!longformat["gameRules"]["promotionRanks"]){
                 string = string.replace(/[\(\)]+/g,"").split("|");
                 longformat["gameRules"]["promotionRanks"] = [];
@@ -341,9 +339,6 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
 
         // win condition (has to start with a letter and not include numbers)
         if(/^(\(?[a-zA-z][^0-9]*)$/.test(string)){
-            if (!longformat["gameRules"]){
-                longformat["gameRules"] = {};
-            }
             if (!longformat["gameRules"]["winConditions"]){
                 longformat["gameRules"]["winConditions"] = {};
                 string = string.replace(/[\(\)]/g,"").split("|");
@@ -378,8 +373,7 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
                 shortformat = shortformat.slice(index_loc+1);
             }
             let parsed = JSON.parse(string);
-            if (!longformat["gameRules"]) longformat["gameRules"] = parsed;
-            else for (let key in parsed) {
+            for (let key in parsed) {
                 longformat["gameRules"][key] = parsed[key];
             }
             continue;
