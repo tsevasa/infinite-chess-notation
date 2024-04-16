@@ -354,7 +354,7 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
                 }
                 continue;
             }
-        }
+        } else longformat.gameRules.winConditions = { white: ['checkmate'], black: ['checkmate'] }
 
         // Other gameRules are included in the FEN. Parse them into an object
         if (string[0] === '{') {
