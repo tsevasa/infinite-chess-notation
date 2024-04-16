@@ -392,6 +392,7 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
             const { startingPosition, specialRights } = getStartingPositionAndSpecialRightsFromShortPosition(string);
             if (Object.keys(specialRights).length > 0) longformat["specialRights"] = specialRights;
             longformat["startingPosition"] = startingPosition;
+            longformat.shortposition = string;
             continue;
         }
 
