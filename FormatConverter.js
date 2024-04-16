@@ -269,9 +269,7 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
             metadata[metadatastring] = "";
         }
     }
-    if (Object.keys(metadata).length != 0){
-        longformat["metadata"] = metadata;
-    }
+    longformat["metadata"] = metadata;
 
     while(shortformat != ""){
         if (/\s/.test(shortformat[0])){
