@@ -290,7 +290,7 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
         if (!longformat["turn"] && /^(w|b)$/.test(string)){
             longformat["turn"] = (string == "b" ? "black" : "white");
             continue;
-        }
+        } else longformat.turn = "white";
 
         // en passant
         if (!longformat["enpassant"] && /^(-?[0-9]+,-?[0-9]+)$/.test(string)){
