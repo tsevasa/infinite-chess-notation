@@ -287,11 +287,11 @@ const formatconverter = (function() {
             }
 
             // promotion lines
-            if(/^\(((()|([^\(\)\|]*\|)-?[0-9]+)|(\|\)$))/.test(string)){
+            if(/((\()|(\|)-?[0-9]+)|(\(\|\))/.test(string)){
                 if (!longformat["gameRules"]["promotionRanks"]){
                     string = string.replace(/[\(\)]+/g,"").split("|");
                     longformat["gameRules"]["promotionRanks"] = [];
-                    longformat["gameRules"]["promotionsAllowed"] = {};
+                    longformat["gameRules"]["promotionsAllowed"] = { white: [], black: [] };
                     for (let i = 0; i < 2; i++){
                         let color = (i==0 ? "white" : "black");
                         if (string[i] != "" && string[i] != null){
@@ -838,7 +838,7 @@ const formatconverter = (function() {
         // console.log("Position after 21 half moves in short format:\n\n" + LongToShort_Format(position));
 
         // String test:
-        console.log('\nTest:\n\n' + JSON.stringify(ShortToLong_Format(' 3,4 3 w 3232098/2319080123213 K3,3+ {"asdds}sd a": 2332, "{nes(|)t}" : { "nes t2": "233 22" } } [asa: adsdsa] checkmate,asd  (|4;q) ')) + '\n');
+        console.log('\nTest:\n\n' + JSON.stringify(ShortToLong_Format(' 3,4  3 w 3232098/2319080123213 K3,3+ {"asdds}sd a": 2332, "{nest}" : { "nes t2": "233 22" } } [asa: adsdsa] checkmate,asd   ')) + '\n');
 
         // Move conversion
         console.log(ShortToLong_CompactMove('2,-3>3,-4ha'));
