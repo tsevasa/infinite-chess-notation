@@ -310,7 +310,7 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
         }
 
         // promotion lines
-        if(/^((\(-?[0-9]+.*\|.*\))|(\(.*\|-?[0-9]+.*\))|(\(\|\)))$/.test(string)){
+        if(/((\()|(\|)-?[0-9]+)|(\(\|\))/.test(string)){
             if (!longformat["gameRules"]["promotionRanks"]){
                 string = string.replace(/[\(\)]+/g,"").split("|");
                 longformat["gameRules"]["promotionRanks"] = [];
@@ -380,7 +380,7 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
         }
 
         // position
-        if(!longformat["startingPosition"] && /^([a-zA-z]+-?[0-9]+,-?[0-9]+.*)$/.test(string)){
+        if(!longformat["startingPosition"] && /^([a-zA-z]+-?[0-9]+,-?[0-9]+)/.test(string)){
             const { startingPosition, specialRights } = getStartingPositionAndSpecialRightsFromShortPosition(string);
             longformat["specialRights"] = specialRights;
             longformat["startingPosition"] = startingPosition;
@@ -389,7 +389,7 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
         }
 
         //moves - conversion stops here
-        if(/^(([0-9]+\..*)|([a-zA-Z]*-?[0-9]+,-?[0-9]+[^\|\.0-9]*(x|>)+.*))$/.test(string)){
+        if(/^(([0-9]+\.)|([a-zA-Z]*-?[0-9]+,-?[0-9]+[^\|\.0-9]*(x|>)+))/.test(string)){
             let shortmoves = (string + "  "+ shortformat).trimEnd();
             longformat["moves"] = [];
 
@@ -448,7 +448,7 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
                 }
 
                 let isPromotion = false;
-                suffix = suffix.replace(/(\{.*\}|\(.*\))/g,""); // discard comments in (), {}
+                suffix = suffix.replace(/(\{[^\{\}\(\)]*\}|\([^\{\}\(\)]*\))/g,""); // discard comments in (), {}
                 let promotedPiece = ( /[a-zA-Z]+/.test(suffix) ? suffix.match(/[a-zA-Z]+/) : "");
                 if (promotedPiece != ""){
                     isPromotion = true;
