@@ -251,6 +251,7 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
 function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true, trust_check_and_mate_symbols = true){
     let longformat = {};
     longformat.gameRules = {};
+    longformat.turn = "white"; // Default value in case the shortformat doesn't specify
 
     // metadata handling. Don't put ": " in metadata fields.
     let metadata = {};
@@ -289,7 +290,7 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
         if (!longformat["turn"] && /^(w|b)$/.test(string)){
             longformat["turn"] = (string == "b" ? "black" : "white");
             continue;
-        } else longformat.turn = "white";
+        }
 
         // en passant
         if (!longformat["enpassant"] && /^(-?[0-9]+,-?[0-9]+)$/.test(string)){
