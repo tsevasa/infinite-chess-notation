@@ -354,7 +354,7 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
                 }
                 continue;
             }
-        } else longformat.gameRules.winConditions = { white: ['checkmate'], black: ['checkmate'] }
+        }
 
         // Other gameRules are included in the FEN. Parse them into an object
         if (string[0] === '{') {
@@ -569,10 +569,12 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
                 longformat["moves"].push(longmove);
             }
             if (!longformat.turn) longformat.turn = "white"; // Set the default value if the shortformat didn't specify
+            if (!longformat.gameRules.winConditions) longformat.gameRules.winConditions = { white: ['checkmate'], black: ['checkmate'] } // Default win conditions if none specified
             return longformat;
         }
     }
     if (!longformat.turn) longformat.turn = "white"; // Set the default value if the shortformat didn't specify
+    if (!longformat.gameRules.winConditions) longformat.gameRules.winConditions = { white: ['checkmate'], black: ['checkmate'] } // Default win conditions if none specified
     return longformat;
 }
 
