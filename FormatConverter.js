@@ -586,9 +586,7 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
 function GameToPosition(longformat, halfmoves = 0, modify_input = false){
     if (typeof longformat.startingPosition === 'string') throw new Error('startingPosition must be in json format!')
     
-    if(!longformat["moves"]){
-        return longformat;
-    }
+    if (!longformat.moves || longformat.moves.length === 0) return longformat;
     let ret = modify_input ? longformat : structuredClone(longformat);
     let enpassantcoordinates = (ret["enpassant"] ? ret["enpassant"] : "");
     for (let i = 0; i < Math.min(halfmoves, ret["moves"].length); i++){
