@@ -584,6 +584,8 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
  * @returns {object} Output gamefile in JSON format
  */
 function GameToPosition(longformat, halfmoves = 0, modify_input = false){
+    if (typeof longformat.startingPosition === 'string') throw new Error('startingPosition must be in json format!')
+    
     if(!longformat["moves"]){
         return longformat;
     }
