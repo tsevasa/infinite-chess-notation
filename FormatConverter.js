@@ -251,7 +251,6 @@ function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true
 function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true, trust_check_and_mate_symbols = true){
     let longformat = {};
     longformat.gameRules = {};
-    longformat.turn = "white"; // Default value in case the shortformat doesn't specify
 
     // metadata handling. Don't put ": " in metadata fields.
     let metadata = {};
@@ -569,9 +568,11 @@ function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true,
                 
                 longformat["moves"].push(longmove);
             }
+            if (!longformat.turn) longformat.turn = "white"; // Set the default value if the shortformat didn't specify
             return longformat;
         }
     }
+    if (!longformat.turn) longformat.turn = "white"; // Set the default value if the shortformat didn't specify
     return longformat;
 }
 
