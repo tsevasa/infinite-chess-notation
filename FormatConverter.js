@@ -355,7 +355,7 @@ const formatconverter = (function() {
             }
 
             // position
-            if(!longformat["startingPosition"] && /^([a-zA-z]+-?[0-9]+,-?[0-9]+)/.test(string)){
+            if(!longformat["startingPosition"] && /^([a-zA-z]+-?[0-9]+,-?[0-9]+($|[^x>]+))/.test(string)){
                 const { startingPosition, specialRights } = getStartingPositionAndSpecialRightsFromShortPosition(string);
                 longformat["specialRights"] = specialRights;
                 longformat["startingPosition"] = startingPosition;
@@ -388,7 +388,12 @@ const formatconverter = (function() {
                 let pawnEndString;
                 if (reconstruct_optional_move_flags){
                     if (!longformat["startingPosition"]){
-                        throw new Error("Moves have to be reconstructed but no starting position submitted!");
+                        if (!longformat["metadata"]["Variant"]){
+                            throw new Error("Moves have to be reconstructed but no starting position or variant submitted!");
+                        } else{
+                            // You may replace the line below by setting the starting position according to the longformat["metadata"]["Variant"] entry, if applicable
+                            throw new Error("Moves have to be reconstructed but no starting position submitted!");
+                        }
                     }
                     
                     if (longformat["enpassant"]){
@@ -841,6 +846,9 @@ const formatconverter = (function() {
 
         // String test:
         console.log('\nTest:\n\n' + JSON.stringify(ShortToLong_Format(' 3,4 3 w 3232098/2319080123213 K3,3+ {"asdds}sd a": 2332, "{nes(|)t}" : { "nes t2": "233 22" } } [asa: adsdsa] checkmate,asd (|4;q) ')) + '\n');
+
+        // String test - no position:
+        console.log('Test (no moves):\n\n' + JSON.stringify(ShortToLong_Format('[Variant: Classical] w 0/100 1 (8|1) R8,1>11,1|r8,8>11,8', false, false)) + '\n');
 
         // Move conversion
         console.log(ShortToLong_CompactMove('2,-3>3,-4ha'));
