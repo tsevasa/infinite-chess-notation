@@ -389,9 +389,9 @@ const formatconverter = (function() {
                 }
 
                 let runningCoordinates = {}; // contains current piece type at coordinates, and "undefined" if piece no longer on that square
-                let wasWhiteDoublePawnMove = false;
-                let wasBlackDoublePawnMove = false;
-                let pawnEndString;
+                let wasWhiteDoublePawnMove = false; // boolean specifying if previous move was double pawn move by white
+                let wasBlackDoublePawnMove = false; // boolean specifying if previous move was double pawn move by black
+                let pawnEndString; // end square of previous pawn move
                 if (reconstruct_optional_move_flags){
                     if (!longformat["startingPosition"]){
                         throw new Error("Moves have to be reconstructed but no starting position submitted!");
@@ -399,7 +399,13 @@ const formatconverter = (function() {
                     
                     if (longformat["enpassant"]){
                         pawnEndString = longformat["enpassant"].toString();
-                        wasBlackDoublePawnMove = true;
+                        if (!longformat["turn"]){
+                            wasBlackDoublePawnMove = true;
+                        } else if (longformat["turn"] == "white"){
+                            wasBlackDoublePawnMove = true;
+                        } else if (longformat["turn"] == "black"){
+                            wasWhiteDoublePawnMove = true;
+                        }
                     }
                 }
 
@@ -429,7 +435,12 @@ const formatconverter = (function() {
                     let promotedPiece = ( /[a-zA-Z]+/.test(suffix) ? suffix.match(/[a-zA-Z]+/) : "");
                     if (promotedPiece != ""){
                         isPromotion = true;
-                        promotedPiece = ShortToLong_Piece(promotedPiece);
+                        try{
+                            promotedPiece = ShortToLong_Piece(promotedPiece);
+                        } catch(e) {
+                            // promoted piece defaults to Q or q if no valid promoted piece found
+                            promotedPiece = (endCoords[1] > startCoords[1] ? "queensW" : "queensB");
+                        }
                     }
 
                     let movedPiece;
@@ -440,6 +451,8 @@ const formatconverter = (function() {
                             movedPiece =`${longformat["startingPosition"][startString]}`;
                         }
                         runningCoordinates[startString] = undefined;
+                        // moved piece defaults to Q if invalid:
+                        movedPiece = (movedPiece == "" || movedPiece == "null" || movedPiece == "undefined" ? "queensW" : movedPiece);
                         longmove["type"] = movedPiece;
                     }
                     
@@ -451,23 +464,27 @@ const formatconverter = (function() {
                         let capturedPiece;
                         if(runningCoordinates[endString]){
                             capturedPiece = `${runningCoordinates[endString]}`;
+                            // captured piece defaults to Q if invalid:
+                            capturedPiece = (capturedPiece == "" || capturedPiece == "null" || capturedPiece == "undefined" ? "queensW" : capturedPiece);
                             longmove["captured"] = capturedPiece;
                         } else if (longformat["startingPosition"][endString] && !(endString in runningCoordinates)){
                             capturedPiece = `${longformat["startingPosition"][endString]}`;
+                            // captured piece defaults to Q if invalid:
+                            capturedPiece = (capturedPiece == "" || capturedPiece == "null" || capturedPiece == "undefined" ? "queensW" : capturedPiece);
                             longmove["captured"] = capturedPiece;
                         } else if (movedPiece.slice(0, -1) == "pawns" && startCoords[0] != endCoords[0] && startCoords[1] != endCoords[1]){
-                            // En passant
+                            // En passant (no piece was directly captured but pawn moved diagonally)
                             if (runningCoordinates[pawnEndString]){
                                 capturedPiece = `${runningCoordinates[pawnEndString]}`;
                             } else {
                                 capturedPiece = `${longformat["startingPosition"][pawnEndString]}`;
                             }
-                            runningCoordinates[pawnEndString] = undefined;
                             if (wasWhiteDoublePawnMove || wasBlackDoublePawnMove){
+                                runningCoordinates[pawnEndString] = undefined;
+                                // captured piece defaults to Q if invalid:
+                                capturedPiece = (capturedPiece == "" || capturedPiece == "null" || capturedPiece == "undefined" ? "queensW" : capturedPiece);
                                 longmove["captured"] = capturedPiece;
                                 longmove["enpassant"] = (wasWhiteDoublePawnMove ? 1 : -1);
-                            } else{
-                                // En passant capture expected but not possible
                             }
                         }
                     }
@@ -521,9 +538,7 @@ const formatconverter = (function() {
                                         }
                                     }
                                 }
-                                if (castleCandidate == ""){
-                                    // Castling failed
-                                } else{
+                                if (castleCandidate != ""){
                                     castle["dir"] = (xmove > 1 ? 1 : -1);
                                     castle["coord"] = castleCandidate;
                                     longmove["castle"] = castle;
@@ -852,6 +867,9 @@ const formatconverter = (function() {
 
         // String test - no position:
         console.log('Test (no moves):\n\n' + JSON.stringify(ShortToLong_Format('[Variant: Classical] w 0/100 1 (8|1) R8,1>11,1|r8,8>11,8', false, false)) + '\n');
+
+        // String test - illegal moves:
+        console.log('Test (illegal moves):\n\n' + JSON.stringify(ShortToLong_Format('[Variant: Classical]  w 0/100 1 (8|1) P1,2+|P2,2+|P3,2+|P4,2+|P5,2+|P6,2+|P7,2+|P8,2+|p1,7+|p2,7+|p3,7+|p4,7+|p5,7+|p6,7+|p7,7+|p8,7+|R1,1+|R8,1+|r1,8+|r8,8+|N2,1|N7,1|n2,8|n7,8|B3,1|B6,1|b3,8|b6,8|Q4,1|q4,8|K5,1+|k5,8+  P6,2>10,8=Q NAN62,22>120,82=nan NAN3,1>3,8=n P6,7x5,6Q')) + '\n');
 
         // Move conversion
         console.log(ShortToLong_CompactMove('2,-3>3,-4ha'));
