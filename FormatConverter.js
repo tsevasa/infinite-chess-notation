@@ -353,7 +353,7 @@ const formatconverter = (function() {
             }
 
             // position
-            if(!longformat["startingPosition"] && /^([a-zA-z]+-?[0-9]+,-?[0-9]+($|[^x>]+))/.test(string)){
+            if(!longformat["startingPosition"] && /^([a-zA-z]+-?[0-9]+,-?[0-9]+\+?($|\|))/.test(string)){
                 const { startingPosition, specialRights } = getStartingPositionAndSpecialRightsFromShortPosition(string);
                 longformat["specialRights"] = specialRights;
                 longformat["startingPosition"] = startingPosition;
@@ -371,7 +371,7 @@ const formatconverter = (function() {
             }
 
             //moves - conversion stops here
-            if(/^(([0-9]+\.)|([a-zA-Z]*-?[0-9]+,-?[0-9]+[^\|\.0-9]*(x|>)+))/.test(string)){
+            if(/^(([0-9]+\.)|([a-zA-Z]*-?[0-9]+,-?[0-9]+[\s]*(x|>)+))/.test(string)){
                 let shortmoves = (string + "  "+ shortformat).trimEnd();
                 longformat["moves"] = [];
 
@@ -382,7 +382,7 @@ const formatconverter = (function() {
                     if (end_index == -1) throw new Error("Unclosed \{ found.");
                     shortmoves = shortmoves.slice(0,start_index) + "|" + shortmoves.slice(end_index+1);
                 }
-                shortmoves = shortmoves.match(/[a-zA-Z]*-?[0-9]+,-?[0-9]+[^\|\.0-9]*(x|>)+[^\|\.0-9]*-?[0-9]+,-?[0-9]+[^\|\.0-9]*/g);
+                shortmoves = shortmoves.match(/[a-zA-Z]*-?[0-9]+,-?[0-9]+[\s]*(x|>)+[\s]*-?[0-9]+,-?[0-9]+[^\|\.0-9]*/g);
 
                 if (!shortmoves){
                     delete longformat["moves"];
