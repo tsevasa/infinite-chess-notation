@@ -361,6 +361,14 @@ const formatconverter = (function() {
                 continue;
             }
 
+            // Set starting position according to variant name here, if it is not defined yet
+            if (!longformat["startingPosition"] && longformat["metadata"]["Variant"]){
+                // Naviary, enable these lines below:
+                // const positionAndRights = variant.getStartingPositionOfVariant({ Variant: longformat.metadata.Variant, Version: longformat.metadata.Version })
+                // longformat.startingPosition = positionAndRights.position
+                // longformat.specialRights = positionAndRights.specialRights
+            }
+
             //moves - conversion stops here
             if(/^(([0-9]+\.)|([a-zA-Z]*-?[0-9]+,-?[0-9]+[^\|\.0-9]*(x|>)+))/.test(string)){
                 let shortmoves = (string + "  "+ shortformat).trimEnd();
@@ -386,16 +394,7 @@ const formatconverter = (function() {
                 let pawnEndString;
                 if (reconstruct_optional_move_flags){
                     if (!longformat["startingPosition"]){
-                        if (!longformat["metadata"]["Variant"]){
-                            throw new Error("Moves have to be reconstructed but no starting position or variant submitted!");
-                        } else{
-                            // You may replace the line below by setting the starting position according to the longformat["metadata"]["Variant"] entry, if applicable
-                            throw new Error("Moves have to be reconstructed but no starting position submitted!");
-                            // Naviary, enable these lines below:
-                            // const positionAndRights = variant.getStartingPositionOfVariant({ Variant: longformat.metadata.Variant, Version: longformat.metadata.Version })
-                            // longformat.startingPosition = positionAndRights.position
-                            // longformat.specialRights = positionAndRights.specialRights
-                        }
+                        throw new Error("Moves have to be reconstructed but no starting position submitted!");
                     }
                     
                     if (longformat["enpassant"]){
