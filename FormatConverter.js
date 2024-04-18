@@ -394,6 +394,16 @@ const formatconverter = (function() {
                 if (reconstruct_optional_move_flags){
                     if (!longformat["startingPosition"]){
                         throw new Error("Moves have to be reconstructed but no starting position submitted!");
+                        if (!longformat["metadata"]["Variant"]){
+                            throw new Error("Moves have to be reconstructed but no starting position or variant submitted!");
+                        } else{
+                            // You may replace the line below by setting the starting position according to the longformat["metadata"]["Variant"] entry, if applicable
+                            throw new Error("Moves have to be reconstructed but no starting position submitted!");
+                            // Naviary, enable these lines below:
+                            // const positionAndRights = variant.getStartingPositionOfVariant({ Variant: longformat.metadata.Variant, Version: longformat.metadata.Version })
+                            // longformat.startingPosition = positionAndRights.position
+                            // longformat.specialRights = positionAndRights.specialRights
+                        }
                     }
                     
                     if (longformat["enpassant"]){
