@@ -512,6 +512,9 @@ const formatconverter = (function() {
                                 wasWhiteDoublePawnMove = false;
                                 wasBlackDoublePawnMove = false;
                             }
+                        } else{
+                            wasWhiteDoublePawnMove = false;
+                            wasBlackDoublePawnMove = false;
                         }
                     }
 
