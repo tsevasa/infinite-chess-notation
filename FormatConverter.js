@@ -362,6 +362,7 @@ const formatconverter = (function() {
             }
 
             // Set starting position according to variant name here, if it is not defined yet
+            // This will get run when the current string is in an illegal format or if it is the start of the moves (thus, moves always need to be at the end)
             if (!longformat["startingPosition"] && longformat["metadata"]["Variant"]){
                 // Naviary, enable these lines below:
                 // const positionAndRights = variant.getStartingPositionOfVariant({ Variant: longformat.metadata.Variant, Version: longformat.metadata.Version })
