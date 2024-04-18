@@ -458,17 +458,18 @@ const formatconverter = (function() {
                             capturedPiece = `${longformat["startingPosition"][endString]}`;
                             longmove["captured"] = capturedPiece;
                         } else if (movedPiece.slice(0, -1) == "pawns" && startCoords[0] != endCoords[0] && startCoords[1] != endCoords[1]){
+                            // En passant
+                            if (runningCoordinates[pawnEndString]){
+                                capturedPiece = `${runningCoordinates[pawnEndString]}`;
+                            } else {
+                                capturedPiece = `${longformat["startingPosition"][pawnEndString]}`;
+                            }
+                            runningCoordinates[pawnEndString] = undefined;
                             if (wasWhiteDoublePawnMove || wasBlackDoublePawnMove){
-                                if (runningCoordinates[pawnEndString]){
-                                    capturedPiece = `${runningCoordinates[pawnEndString]}`;
-                                } else {
-                                    capturedPiece = `${longformat["startingPosition"][pawnEndString]}`;
-                                }
-                                runningCoordinates[pawnEndString] = undefined;
                                 longmove["captured"] = capturedPiece;
                                 longmove["enpassant"] = (wasWhiteDoublePawnMove ? 1 : -1);
                             } else{
-                                throw new Error("Error: En passant capture expected on move "+i+" but not possible.");
+                                // En passant capture expected but not possible
                             }
                         }
                     }
@@ -523,14 +524,15 @@ const formatconverter = (function() {
                                     }
                                 }
                                 if (castleCandidate == ""){
-                                    throw new Error("Error: Castling failed on move "+i);
+                                    // Castling failed
+                                } else{
+                                    castle["dir"] = (xmove > 1 ? 1 : -1);
+                                    castle["coord"] = castleCandidate;
+                                    longmove["castle"] = castle;
+                                    let castleString = castleCandidate.toString();
+                                    runningCoordinates[`${(parseInt(endCoords[0])-castle["dir"]).toString()},${endCoords[1].toString()}`] = `${longformat["startingPosition"][castleString]}`;
+                                    runningCoordinates[castleString] = undefined;
                                 }
-                                castle["dir"] = (xmove > 1 ? 1 : -1);
-                                castle["coord"] = castleCandidate;
-                                longmove["castle"] = castle;
-                                let castleString = castleCandidate.toString();
-                                runningCoordinates[`${(parseInt(endCoords[0])-castle["dir"]).toString()},${endCoords[1].toString()}`] = `${longformat["startingPosition"][castleString]}`;
-                                runningCoordinates[castleString] = undefined;
                             }
                         }
                     }
