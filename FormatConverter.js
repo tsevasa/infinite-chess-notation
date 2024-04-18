@@ -539,9 +539,11 @@ const formatconverter = (function() {
                     
                     longformat["moves"].push(longmove);
                 }
+                if (!longformat.gameRules.winConditions) longformat.gameRules.winConditions = { white: ['checkmate'], black: ['checkmate'] } // Default win conditions if none specified
                 return longformat;
             }
         }
+        if (!longformat.gameRules.winConditions) longformat.gameRules.winConditions = { white: ['checkmate'], black: ['checkmate'] } // Default win conditions if none specified
         return longformat;
     }
 
