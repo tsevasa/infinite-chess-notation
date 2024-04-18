@@ -393,6 +393,10 @@ const formatconverter = (function() {
                         } else{
                             // You may replace the line below by setting the starting position according to the longformat["metadata"]["Variant"] entry, if applicable
                             throw new Error("Moves have to be reconstructed but no starting position submitted!");
+                            // Naviary, enable these lines below:
+                            // const positionAndRights = variant.getStartingPositionOfVariant({ Variant: longformat.metadata.Variant, Version: longformat.metadata.Version })
+                            // longformat.startingPosition = positionAndRights.position
+                            // longformat.specialRights = positionAndRights.specialRights
                         }
                     }
                     
