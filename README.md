@@ -56,7 +56,7 @@ b 4,3 0/100 1 (8|1) checkmate P1,2+|P2,2+|P3,2+|P4,4|P5,2+|P6,2+|P7,2+|P8,2+|p1,
 
 ## Describing games
 
-A game is played by simply appending legal moves to a starting position. The starting position always needs to be specified, since there is no single natural starting position or ruleset in infinite chess. Moves can be separated from each other by either whitespace characters or `|`.
+A game is played by simply appending legal moves to a starting position. The starting position always needs to be specified, since there is no single natural starting position or ruleset in infinite chess. Moves can be separated from each other by either `|` or `.` characters, or comments in {} brackets.
 
 Furthermore, metadata in square brackets can be freely included in front in order to display information about the game played.
 
