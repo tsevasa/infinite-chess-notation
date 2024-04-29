@@ -670,8 +670,16 @@ const formatconverter = (function() {
      * @returns {object} Output move as JSON: { startCoords, endCoords }
      */
     function ShortToLong_CompactMove(shortmove){
-        let coords = shortmove.match(/-?[0-9]+,-?[0-9]+/g);
-        coords = coords.map((movestring) => { return getCoordsFromString(movestring) });
+        let coords = shortmove.match(/-?[0-9]+,-?[0-9]+/g); // ['1,2','3,4']
+        // Make sure the move contains exactly 2 coordinates.
+        if (coords.length !== 2) throw new Error(`Short move does not contain 2 valid coordinates: ${JSON.stringify(coords)}`)
+        coords = coords.map((movestring) => { return getCoordsFromString(movestring) }); // [[1,2],[3,4]]
+        // Make sure the parsed number is not Infinity
+        coords.forEach((coords) => { // coords = [1,2]
+            if (!isFinite(coords[0])) throw new Error(`Move coordinate must not be Infinite. coords: ${coords}`)
+            if (!isFinite(coords[1])) throw new Error(`Move coordinate must not be Infinite. coords: ${coords}`)
+        })
+        // ShortToLong_Piece() will already throw an error if the piece abbreviation is invalid.
         let promotedPiece = (/[a-zA-Z]+/.test(shortmove) ? ShortToLong_Piece(shortmove.match(/[a-zA-Z]+/)) : "");
         let longmove = {};
         longmove["startCoords"] = coords[0];
