@@ -671,6 +671,7 @@ const formatconverter = (function() {
      */
     function ShortToLong_CompactMove(shortmove){
         let coords = shortmove.match(/-?[0-9]+,-?[0-9]+/g);
+        coords = coords.map((movestring) => { return getCoordsFromString(movestring) });
         let promotedPiece = (/[a-zA-Z]+/.test(shortmove) ? ShortToLong_Piece(shortmove.match(/[a-zA-Z]+/)) : "");
         let longmove = {};
         longmove["startCoords"] = coords[0];
@@ -875,7 +876,7 @@ const formatconverter = (function() {
         console.log('Test (illegal moves):\n\n' + JSON.stringify(ShortToLong_Format('[Variant: Classical]  w 0/100 1 (8|1) P1,2+|P2,2+|P3,2+|P4,2+|P5,2+|P6,2+|P7,2+|P8,2+|p1,7+|p2,7+|p3,7+|p4,7+|p5,7+|p6,7+|p7,7+|p8,7+|R1,1+|R8,1+|r1,8+|r8,8+|N2,1|N7,1|n2,8|n7,8|B3,1|B6,1|b3,8|b6,8|Q4,1|q4,8|K5,1+|k5,8+  P6,2>10,8=Q NAN62,22>120,82=nan NAN3,1>3,8=n{great move} P6,7x5,6{what a move}n8,7x5,7{ha ha}')) + '\n');
 
         // Move conversion
-        console.log(ShortToLong_CompactMove('2,-3>3,-4ha'));
+        console.log(JSON.stringify(ShortToLong_CompactMove('2,-3>3,-4ha')));
         console.log(LongToShort_CompactMove({"startCoords":[2,-3],"endCoords":[3,-4],"promotion":"hawksB"}));
 
         // specialMoves reconstruction, given the position, pawnDoublePush gamerule, and castleWith gamerule
