@@ -666,6 +666,8 @@ const formatconverter = (function() {
     /**
      * Converts a single compact move "a,b>c,dX" in ICN notation to JSON format.
      * Doesn't reconstruct captured, enpassant, or castle flags, but DOES reconstruct promotion flag.
+     * 
+     * **Throws and error** if the move is in an invalid format.
      * @param {string} shortmove - Input move as string
      * @returns {object} Output move as JSON: { startCoords, endCoords }
      */
