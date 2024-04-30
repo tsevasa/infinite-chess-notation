@@ -521,8 +521,9 @@ const formatconverter = (function() {
                     // castling handling
                     if (reconstruct_optional_move_flags){
                         if (movedPiece.slice(0, -1) == "kings"){
-                            let xmove = endCoords[0] - startCoords[0];
-                            if (xmove > 1 || xmove < -1){
+                            const xmove = endCoords[0] - startCoords[0];
+                            const ymove = endCoords[1] - startCoords[1];
+                            if (Math.abs(xmove) === 2 && ymove === 0){
                                 let castle = {};
                                 let castleCandidate = "";
                                 for (let coordinate in longformat["specialRights"]){
