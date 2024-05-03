@@ -411,15 +411,21 @@ const formatconverter = (function() {
                 }
 
                 for (let i = 0; i < shortmoves.length; i++){
-                    let longmove = {};
                     let coords = shortmoves[i].match(/-?[0-9]+,-?[0-9]+/g);
                     let startString = coords[0];
                     let endString = coords[1];
-                    let startCoords = getCoordsFromString(startString);
-                    let endCoords = getCoordsFromString(endString);
 
                     let suffix_index = shortmoves[i].lastIndexOf(endString) + endString.length;
                     let suffix = shortmoves[i].slice(suffix_index).trimStart().trimEnd();
+
+                    // simplified longmoves (comment out next 2 lines and uncomment block below to get back old behavior)
+                    let promotedPiece = ( /[a-zA-Z]+/.test(suffix) ? suffix.match(/[a-zA-Z]+/) : "");
+                    longformat["moves"].push(`${startString}>${endString}${promotedPiece}`);
+
+                    /*
+                    let longmove = {};
+                    let startCoords = getCoordsFromString(startString);
+                    let endCoords = getCoordsFromString(endString);
 
                     let isCheck = false;
                     let isMate = false;
@@ -565,6 +571,7 @@ const formatconverter = (function() {
                     }
                     
                     longformat["moves"].push(longmove);
+                    */
                 }
                 if (!longformat.gameRules.winConditions) longformat.gameRules.winConditions = { white: ['checkmate'], black: ['checkmate'] } // Default win conditions if none specified
                 return longformat;
