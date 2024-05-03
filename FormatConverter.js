@@ -60,7 +60,7 @@ const formatconverter = (function() {
 
     /**
      * Converts a gamefile in JSON format to Infinite Chess Notation.
-     * @param {object} longformat - The gamefile in JSON format
+     * @param {Object} longformat - The gamefile in JSON format
      * @param {number} compact_moves - Optional. Number between 0-2 for how compact you want the resulting ICN (0 = least compact, pretty. 1: moderately compact. 2: most compact, no 'x','+', or '#') Default: 0
      * @param {boolean} [make_new_lines] - Optional. Boolean specifying whether linebreaks should be included in the output string. Default: true
      * @returns {string} The ICN of the gamefile as a string
@@ -230,7 +230,7 @@ const formatconverter = (function() {
      * @param {string} shortformat - A string in ICN
      * @param {boolean} [reconstruct_optional_move_flags] - Optional. If true, method will reconstruct "type", "captured", "enpassant" and "castle" flags of moves. Default: *true*
      * @param {boolean} [trust_check_and_mate_symbols] - Optional. If true, method will set "check" and "mate" flags of moves based on + and # symbols. Default: *true*
-     * @returns {object} Equivalent gamefile in JSON format
+     * @returns {Object} Equivalent gamefile in JSON format
      */
     function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true, trust_check_and_mate_symbols = true){
         let longformat = {};
@@ -576,10 +576,10 @@ const formatconverter = (function() {
 
     /**
      * Converts a gamefile in JSON format to single position gamefile in JSON format with deleted "moves" object
-     * @param {object} longformat - Input gamefile in JSON format
+     * @param {Object} longformat - Input gamefile in JSON format
      * @param {number} [halfmoves] - Number of halfmoves from starting position (Infinity: final position of game)
      * @param {boolean} [modify_input] - If false, a new object is created and returned. If true, the input object is modified (which is faster)
-     * @returns {object} Output gamefile in JSON format
+     * @returns {Object} Output gamefile in JSON format
      */
     function GameToPosition(longformat, halfmoves = 0, modify_input = false){
         if (typeof longformat.startingPosition === 'string') throw new Error('startingPosition must be in json format!')
@@ -656,7 +656,7 @@ const formatconverter = (function() {
 
     /**
      * Converts a single move in JSON format to most-compact (excludes 'x','+','#') ICN notation: 'a,b>c,dX'
-     * @param {object} longmove - Input move in JSON format
+     * @param {Object} longmove - Input move in JSON format
      * @returns {string} Output string in compact ICN notation
      */
     function LongToShort_CompactMove(longmove){
@@ -670,7 +670,7 @@ const formatconverter = (function() {
      * 
      * **Throws and error** if the move is in an invalid format.
      * @param {string} shortmove - Input move as string
-     * @returns {object} Output move as JSON: { startCoords, endCoords, promotion }
+     * @returns {Object} Output move as JSON: { startCoords, endCoords, promotion }
      */
     function ShortToLong_CompactMove(shortmove){
         let coords = shortmove.match(/-?[0-9]+,-?[0-9]+/g); // ['1,2','3,4']
@@ -695,8 +695,8 @@ const formatconverter = (function() {
 
     /**
      * Accepts a gamefile's starting position and specialRights properties, returns the position in compressed notation (.e.g., "P5,6+|k15,-56|Q5000,1")
-     * @param {object} position - The starting position of the gamefile, in the form 'x,y':'pawnsW'
-     * @param {object} [specialRights] - Optional. The special rights of each piece in the gamefile, in the form 'x,y':true, where true means the piece at that coordinate can perform their special move (pawn double push, castling rights..)
+     * @param {Object} position - The starting position of the gamefile, in the form 'x,y':'pawnsW'
+     * @param {Object} [specialRights] - Optional. The special rights of each piece in the gamefile, in the form 'x,y':true, where true means the piece at that coordinate can perform their special move (pawn double push, castling rights..)
      * @returns {string} The position of the game in compressed form, where each piece with a + has its special move ability
      */
     function LongToShort_Position(position, specialRights = {}) {
@@ -716,7 +716,7 @@ const formatconverter = (function() {
 
     /**
      * Accepts a gamefile's starting position, pawnDoublePush and castleWith gamerules, returns the position in compressed notation (.e.g., "P5,6+|k15,-56|Q5000,1")
-     * @param {object} position - The starting position of the gamefile, in the form 'x,y':'pawnsW'
+     * @param {Object} position - The starting position of the gamefile, in the form 'x,y':'pawnsW'
      * @param {boolean} pawnDoublePush - Whether or not pawns are allowed to double push
      * @param {string | undefined} castleWith - If castling is allowed, this is what piece the king can castle with (e.g., "rooks"),
      * @returns {string} The position of the game in compressed form, where each piece with a + has its special move ability
@@ -731,10 +731,10 @@ const formatconverter = (function() {
      * Only gives pieces that can castle their right if they are on the same rank, and color, as the king, and atleast 3 squares away
      * 
      * This can be manually used to compress the starting position of variants of InfiniteChess.org to shrink the size of the code
-     * @param {object} position - The starting position of the gamefile, in the form 'x,y':'pawnsW'
+     * @param {Object} position - The starting position of the gamefile, in the form 'x,y':'pawnsW'
      * @param {boolean} pawnDoublePush - Whether or not pawns are allowed to double push
      * @param {string | undefined} castleWith - If castling is allowed, this is what piece the king can castle with (e.g., "rooks"), otherwise leave it undefined
-     * @returns {object} The specialRights gamefile property, in the form 'x,y':true, where true means the piece at that location has their special move ability (pawn double push, castling rights..)
+     * @returns {Object} The specialRights gamefile property, in the form 'x,y':true, where true means the piece at that location has their special move ability (pawn double push, castling rights..)
      */
     function generateSpecialRights(position, pawnDoublePush, castleWith) {
         const specialRights = {};
@@ -798,7 +798,7 @@ const formatconverter = (function() {
     /**
      * Takes the position in compressed short form and returns the startingPosition and specialRights properties of the gamefile
      * @param {string} shortposition - The compressed position of the gamefile (e.g., "K5,4+|P1,2|r500,25389")
-     * @returns {object} An object containing 2 properties: startingPosition, and specialRights
+     * @returns {Object} An object containing 2 properties: startingPosition, and specialRights
      */
     function getStartingPositionAndSpecialRightsFromShortPosition(shortposition) {
         const startingPosition = {};
