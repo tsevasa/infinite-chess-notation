@@ -228,11 +228,11 @@ const formatconverter = (function() {
     /**
      * Converts a string in Infinite Chess Notation to gamefile in JSON format
      * @param {string} shortformat - A string in ICN
-     * @param {boolean} [reconstruct_optional_move_flags] - Optional. If true, method will reconstruct "type", "captured", "enpassant" and "castle" flags of moves. Default: *true*
-     * @param {boolean} [trust_check_and_mate_symbols] - Optional. If true, method will set "check" and "mate" flags of moves based on + and # symbols. Default: *true*
+     * @param {boolean} [reconstruct_optional_move_flags] - Deprecated. If true, method will reconstruct "type", "captured", "enpassant" and "castle" flags of moves. Default: *true*
+     * @param {boolean} [trust_check_and_mate_symbols] - Deprecated. If true, method will set "check" and "mate" flags of moves based on + and # symbols. Default: *true*
      * @returns {Object} Equivalent gamefile in JSON format
      */
-    function ShortToLong_Format(shortformat, reconstruct_optional_move_flags = true, trust_check_and_mate_symbols = true){
+    function ShortToLong_Format(shortformat/*, reconstruct_optional_move_flags = true, trust_check_and_mate_symbols = true*/){
         let longformat = {};
         longformat.gameRules = {};
 
@@ -389,6 +389,7 @@ const formatconverter = (function() {
                     return longformat;
                 }
 
+                /*
                 let runningCoordinates = {}; // contains current piece type at coordinates, and "undefined" if piece no longer on that square
                 let wasWhiteDoublePawnMove = false; // boolean specifying if previous move was double pawn move by white
                 let wasBlackDoublePawnMove = false; // boolean specifying if previous move was double pawn move by black
@@ -409,6 +410,7 @@ const formatconverter = (function() {
                         }
                     }
                 }
+                */
 
                 for (let i = 0; i < shortmoves.length; i++){
                     let coords = shortmoves[i].match(/-?[0-9]+,-?[0-9]+/g);
