@@ -670,7 +670,7 @@ const formatconverter = (function() {
      * 
      * **Throws and error** if the move is in an invalid format.
      * @param {string} shortmove - Input move as string
-     * @returns {object} Output move as JSON: { startCoords, endCoords }
+     * @returns {object} Output move as JSON: { startCoords, endCoords, promotion }
      */
     function ShortToLong_CompactMove(shortmove){
         let coords = shortmove.match(/-?[0-9]+,-?[0-9]+/g); // ['1,2','3,4']
