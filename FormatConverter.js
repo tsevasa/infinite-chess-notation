@@ -65,165 +65,165 @@ const formatconverter = (function() {
      * @param {boolean} [make_new_lines] - Optional. Boolean specifying whether linebreaks should be included in the output string. Default: true
      * @returns {string} The ICN of the gamefile as a string
      */
-    function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true){
-        let shortformat = "";
-        let whitespace = (make_new_lines ? "\n" : " ");
-        // metadata
-        for (let key in longformat["metadata"]){
-            if (longformat.metadata[key] != null) shortformat += `[${key}: ${longformat["metadata"][key]}]${whitespace}`;
-        }
-        if (longformat["metadata"]) shortformat += whitespace;
-
-        // move turn
-        let next_move = "w";
-        if (longformat["turn"] == "black"){
-            shortformat += "b ";
-            next_move = "b";
-        } else if (longformat["turn"] == "white"){
-            shortformat += "w ";
-            next_move = "w";
-        }
-
-        // en passant
-        if(longformat["enpassant"]) shortformat += `${longformat["enpassant"].toString()} `;
-
-        // X move rule
-        if(longformat["moveRule"]) shortformat += `${longformat["moveRule"].toString()} `;
-
-        // full move counter
-        let fullmove = 1;
-        if(longformat["fullMove"]){
-            shortformat += `${longformat["fullMove"].toString()} `;
-            fullmove = parseInt(longformat["fullMove"]);
-        }
-
-        // promotion lines, currently assumes that "promotionRanks" is always defined as a list of length 2, if it is defined
-        if (longformat["gameRules"]){
-            if (longformat["gameRules"]["promotionRanks"]){
-                shortformat += "(";
-                if (longformat["gameRules"]["promotionRanks"][0] != null){
-                    let promotionListWhite = (longformat["gameRules"]["promotionsAllowed"] ? longformat["gameRules"]["promotionsAllowed"]["white"] : null);
-                    shortformat += longformat["gameRules"]["promotionRanks"][0];
-                    if (promotionListWhite){
-                        if (!(promotionListWhite.length == 4 && promotionListWhite.includes("rooks") && promotionListWhite.includes("queens") && promotionListWhite.includes("bishops") && promotionListWhite.includes("knights"))){
-                            shortformat += ";";
-                            for (let longpiece of promotionListWhite){
-                                shortformat += `${LongToShort_Piece(longpiece + "W")},`;
-                            }
-                            shortformat = shortformat.slice(0, -1);
-                        }
-                    }
-                }
-                shortformat += "|";
-                if (longformat["gameRules"]["promotionRanks"][1] != null){
-                    let promotionListBlack = (longformat["gameRules"]["promotionsAllowed"] ? longformat["gameRules"]["promotionsAllowed"]["black"] : null);
-                    shortformat += longformat["gameRules"]["promotionRanks"][1];
-                    if (promotionListBlack){
-                        if (!(promotionListBlack.length == 4 && promotionListBlack.includes("rooks") && promotionListBlack.includes("queens") && promotionListBlack.includes("bishops") && promotionListBlack.includes("knights"))){
-                            shortformat += ";";
-                            for (let longpiece of promotionListBlack){
-                                shortformat += `${LongToShort_Piece(longpiece + "B")},`;
-                            }
-                            shortformat = shortformat.slice(0, -1);
-                        }
-                    }
-                }
-                shortformat += ") ";
-            }
-        }
-
-        // win condition
-        if (longformat["gameRules"]){
-            if(longformat["gameRules"]["winConditions"]){
-                let whitewins = longformat["gameRules"]["winConditions"]["white"];
-                let blackwins = longformat["gameRules"]["winConditions"]["black"];
-                if (whitewins && blackwins){
-                    let wins_are_equal = true;
-                    if (whitewins.length == blackwins.length){
-                        for (let i = 0; i < whitewins.length; i++){
-                            let white_win_i_is_black_win = false;
-                            for (let j = 0; j < blackwins.length; j++){
-                                if (whitewins[i] == blackwins[j]){
-                                    white_win_i_is_black_win = true;
-                                    break;
-                                }
-                            }
-                            if (!white_win_i_is_black_win) wins_are_equal = false;
-                        }
-                    } else wins_are_equal = false;
-                    
-                    if (wins_are_equal) {
-                        if (whitewins[0] !== 'checkmate') shortformat += `${whitewins.toString()} `;
-                    } else {
-                        shortformat += `(${whitewins.toString()}|${blackwins.toString()}) `;
-                    }
-                }
-            }
-        }
-
-        // Extra gamerules not used will be stringified into the ICN
-        const extraGameRules = {};
-        let added_extras = false;
-        for (const key in longformat.gameRules) {
-            if (key === "promotionRanks" || key === "promotionsAllowed" || key === "winConditions") continue; // Skip this key
-            extraGameRules[key] = longformat.gameRules[key];
-            added_extras = true;
-        }
-        if (added_extras) shortformat += `${JSON.stringify(extraGameRules)} `;
-
-        // position
-        if (isStartingPositionInLongFormat(longformat.startingPosition)) {
-            shortformat += LongToShort_Position(longformat.startingPosition, longformat.specialRights);
-        } else { // Already in short format!
-            shortformat += longformat.startingPosition
-        }
-        if (longformat["moves"]) shortformat += `${whitespace}${whitespace}`; // Add more spacing for the next part
-
-        // moves
-        if (longformat["moves"]){
-            let shortmoves = "";
-            for (let i = 0; i < longformat["moves"].length; i++){
-                let longmove = longformat["moves"][i];
-                if (next_move == "w" && compact_moves == 0){
-                    shortmoves += (!make_new_lines && i != 0 ? " " : "");
-                    shortmoves += fullmove.toString() + ". ";
-                } else if (compact_moves == 0){
-                    shortmoves += (i == 0 ? fullmove.toString() + ".   ...   | " : " | ");
-                } else {
-                    shortmoves += (i == 0 ? "" : "|");
-                }
-                shortmoves += (longmove["type"] && (compact_moves == 0 || compact_moves == 1) ? LongToShort_Piece(longmove["type"]) : "");
-                shortmoves += longmove["startCoords"].toString();
-                shortmoves += (compact_moves == 0 ? " " : "");
-                shortmoves += (longmove["captured"] && (compact_moves == 0 || compact_moves == 1) ? "x" : ">");
-                shortmoves += (compact_moves == 0 ? " " : "");
-                shortmoves += longmove["endCoords"].toString();
-                shortmoves += (compact_moves == 0 ? " " : "");
-                if (longmove["promotion"]){
-                    shortmoves += (compact_moves == 0 || compact_moves == 1? "=" : "");
-                    shortmoves += LongToShort_Piece(longmove["promotion"]);
-                }
-                if (longmove["mate"] && (compact_moves == 0 || compact_moves == 1)){
-                    shortmoves += "\#";
-                } else if (longmove["check"] && (compact_moves == 0 || compact_moves == 1)){
-                    shortmoves += "+";
-                }
-                shortmoves = shortmoves.trimEnd();
-                if (next_move == "w"){
-                    next_move = "b";
-                } else{
-                    next_move = "w";
-                    fullmove += 1;
-                    if (i != longformat["moves"].length - 1 && compact_moves == 0){
-                        shortmoves += (make_new_lines ? "\n" : " |");
-                    }
-                }
-            }
-            shortformat += shortmoves.trimEnd();
-        }
-        
-        return shortformat;
+function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true){
+    let shortformat = "";
+    let whitespace = (make_new_lines ? "\n" : " ");
+    // metadata
+    for (let key in longformat["metadata"]){
+        if (longformat.metadata[key] != null) shortformat += `[${key}: ${longformat["metadata"][key]}]${whitespace}`;
     }
+    if (longformat["metadata"]) shortformat += whitespace;
+
+    // move turn
+    let next_move = "w";
+    if (longformat["turn"] == "black"){
+        shortformat += "b ";
+        next_move = "b";
+    } else if (longformat["turn"] == "white"){
+        shortformat += "w ";
+        next_move = "w";
+    }
+
+    // en passant
+    if(longformat["enpassant"]) shortformat += `${longformat["enpassant"].toString()} `;
+
+    // X move rule
+    if(longformat["moveRule"]) shortformat += `${longformat["moveRule"].toString()} `;
+
+    // full move counter
+    let fullmove = 1;
+    if(longformat["fullMove"]){
+        shortformat += `${longformat["fullMove"].toString()} `;
+        fullmove = parseInt(longformat["fullMove"]);
+    }
+
+    // promotion lines, currently assumes that "promotionRanks" is always defined as a list of length 2, if it is defined
+    if (longformat["gameRules"]){
+        if (longformat["gameRules"]["promotionRanks"]){
+            shortformat += "(";
+            if (longformat["gameRules"]["promotionRanks"][0] != null){
+                let promotionListWhite = (longformat["gameRules"]["promotionsAllowed"] ? longformat["gameRules"]["promotionsAllowed"]["white"] : null);
+                shortformat += longformat["gameRules"]["promotionRanks"][0];
+                if (promotionListWhite){
+                    if (!(promotionListWhite.length == 4 && promotionListWhite.includes("rooks") && promotionListWhite.includes("queens") && promotionListWhite.includes("bishops") && promotionListWhite.includes("knights"))){
+                        shortformat += ";";
+                        for (let longpiece of promotionListWhite){
+                            shortformat += `${LongToShort_Piece(longpiece + "W")},`;
+                        }
+                        shortformat = shortformat.slice(0, -1);
+                    }
+                }
+            }
+            shortformat += "|";
+            if (longformat["gameRules"]["promotionRanks"][1] != null){
+                let promotionListBlack = (longformat["gameRules"]["promotionsAllowed"] ? longformat["gameRules"]["promotionsAllowed"]["black"] : null);
+                shortformat += longformat["gameRules"]["promotionRanks"][1];
+                if (promotionListBlack){
+                    if (!(promotionListBlack.length == 4 && promotionListBlack.includes("rooks") && promotionListBlack.includes("queens") && promotionListBlack.includes("bishops") && promotionListBlack.includes("knights"))){
+                        shortformat += ";";
+                        for (let longpiece of promotionListBlack){
+                            shortformat += `${LongToShort_Piece(longpiece + "B")},`;
+                        }
+                        shortformat = shortformat.slice(0, -1);
+                    }
+                }
+            }
+            shortformat += ") ";
+        }
+    }
+
+    // win condition
+    if (longformat["gameRules"]){
+        if(longformat["gameRules"]["winConditions"]){
+            let whitewins = longformat["gameRules"]["winConditions"]["white"];
+            let blackwins = longformat["gameRules"]["winConditions"]["black"];
+            if (whitewins && blackwins){
+                let wins_are_equal = true;
+                if (whitewins.length == blackwins.length){
+                    for (let i = 0; i < whitewins.length; i++){
+                        let white_win_i_is_black_win = false;
+                        for (let j = 0; j < blackwins.length; j++){
+                            if (whitewins[i] == blackwins[j]){
+                                white_win_i_is_black_win = true;
+                                break;
+                            }
+                        }
+                        if (!white_win_i_is_black_win) wins_are_equal = false;
+                    }
+                } else wins_are_equal = false;
+                
+                if (wins_are_equal) {
+                    if (whitewins[0] !== 'checkmate') shortformat += `${whitewins.toString()} `;
+                } else {
+                    shortformat += `(${whitewins.toString()}|${blackwins.toString()}) `;
+                }
+            }
+        }
+    }
+
+    // Extra gamerules not used will be stringified into the ICN
+    const extraGameRules = {};
+    let added_extras = false;
+    for (const key in longformat.gameRules) {
+        if (key === "promotionRanks" || key === "promotionsAllowed" || key === "winConditions") continue; // Skip this key
+        extraGameRules[key] = longformat.gameRules[key];
+        added_extras = true;
+    }
+    if (added_extras) shortformat += `${JSON.stringify(extraGameRules)} `;
+
+    // position
+    if (isStartingPositionInLongFormat(longformat.startingPosition)) {
+        shortformat += LongToShort_Position(longformat.startingPosition, longformat.specialRights);
+    } else { // Already in short format!
+        shortformat += longformat.startingPosition
+    }
+    if (longformat["moves"]) shortformat += `${whitespace}${whitespace}`; // Add more spacing for the next part
+
+    // moves
+    if (longformat["moves"]){
+        let shortmoves = "";
+        for (let i = 0; i < longformat["moves"].length; i++){
+            let longmove = longformat["moves"][i];
+            if (next_move == "w" && compact_moves == 0){
+                shortmoves += (!make_new_lines && i != 0 ? " " : "");
+                shortmoves += fullmove.toString() + ". ";
+            } else if (compact_moves == 0){
+                shortmoves += (i == 0 ? fullmove.toString() + ".   ...   | " : " | ");
+            } else {
+                shortmoves += (i == 0 ? "" : "|");
+            }
+            shortmoves += (longmove["type"] && (compact_moves == 0 || compact_moves == 1) ? LongToShort_Piece(longmove["type"]) : "");
+            shortmoves += longmove["startCoords"].toString();
+            shortmoves += (compact_moves == 0 ? " " : "");
+            shortmoves += (longmove["captured"] && (compact_moves == 0 || compact_moves == 1) ? "x" : ">");
+            shortmoves += (compact_moves == 0 ? " " : "");
+            shortmoves += longmove["endCoords"].toString();
+            shortmoves += (compact_moves == 0 ? " " : "");
+            if (longmove["promotion"]){
+                shortmoves += (compact_moves == 0 || compact_moves == 1? "=" : "");
+                shortmoves += LongToShort_Piece(longmove["promotion"]);
+            }
+            if (longmove["mate"] && (compact_moves == 0 || compact_moves == 1)){
+                shortmoves += "\#";
+            } else if (longmove["check"] && (compact_moves == 0 || compact_moves == 1)){
+                shortmoves += "+";
+            }
+            shortmoves = shortmoves.trimEnd();
+            if (next_move == "w"){
+                next_move = "b";
+            } else{
+                next_move = "w";
+                fullmove += 1;
+                if (i != longformat["moves"].length - 1 && compact_moves == 0){
+                    shortmoves += (make_new_lines ? "\n" : " |");
+                }
+            }
+        }
+        shortformat += shortmoves.trimEnd();
+    }
+    
+    return shortformat;
+}
 
     /**
      * Converts a string in Infinite Chess Notation to gamefile in JSON format
@@ -693,7 +693,7 @@ const formatconverter = (function() {
         })
         // ShortToLong_Piece() will already throw an error if the piece abbreviation is invalid.
         let promotedPiece = (/[a-zA-Z]+/.test(shortmove) ? ShortToLong_Piece(shortmove.match(/[a-zA-Z]+/)) : "");
-        let longmove = {};
+        let longmove = { compact: shortmove };
         longmove["startCoords"] = coords[0];
         longmove["endCoords"] = coords[1];
         if (promotedPiece != ""){
