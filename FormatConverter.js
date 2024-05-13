@@ -376,7 +376,8 @@ const formatconverter = (function() {
 
             //moves - conversion stops here
             if(/^(([0-9]+\.)|([a-zA-Z]*-?[0-9]+,-?[0-9]+[\s]*(x|>)+))/.test(string)){
-                const moves = convertShortMovesToLong(string, shortformat)
+                const shortmoves = (string + "  "+ shortformat).trimEnd();
+                const moves = convertShortMovesToLong(shortmoves)
                 if (moves.length > 0) longformat.moves = moves;
                 if (!longformat.gameRules.winConditions) longformat.gameRules.winConditions = { white: ['checkmate'], black: ['checkmate'] } // Default win conditions if none specified
                 return longformat;
@@ -386,8 +387,7 @@ const formatconverter = (function() {
         return longformat;
     }
 
-    function convertShortMovesToLong(string, shortformat) {
-        let shortmoves = (string + "  "+ shortformat).trimEnd();
+    function convertShortMovesToLong(shortmoves) {
         const longmoves = [];
 
         shortmoves.replace(/[\!\?=]/g,"");
