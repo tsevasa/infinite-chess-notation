@@ -594,7 +594,7 @@ const formatconverter = (function() {
         if (typeof longformat.startingPosition === 'string') throw new Error('startingPosition must be in json format!')
         
         if (!longformat.moves || longformat.moves.length === 0) return longformat;
-        let ret = modify_input ? longformat : structuredClone(longformat);
+        let ret = modify_input ? longformat : deepCopyObject(longformat);
         let enpassantcoordinates = (ret["enpassant"] ? ret["enpassant"] : "");
         for (let i = 0; i < Math.min(halfmoves, ret["moves"].length); i++){
             let move = ret["moves"][i];
@@ -862,6 +862,28 @@ const formatconverter = (function() {
      */
     function isStartingPositionInLongFormat(startingPosition) {
         return typeof startingPosition !== 'string';
+    }
+
+    /**
+     * Deep copies an entire object, no matter how deep its nested.
+     * No properties will contain references to the source object.
+     * Use this instead of structuredClone() when that throws an error due to nested functions.
+     * 
+     * SLOW. Avoid using for very massive objects.
+     * @param {Object | string | number | bigint | boolean} src - The source object
+     * @returns {Object | string | number | bigint | boolean} The copied object
+     */
+    function deepCopyObject(src) {
+        if (typeof src !== "object") return src;
+        
+        let copy = Array.isArray(src) ? [] : {}; // Create an empty array or object
+        
+        for (let key in src) {
+            const value = src[key];
+            copy[key] = deepCopyObject(value); // Recursively copy each property
+        }
+        
+        return copy; // Return the copied object
     }
 
     /////////// TESTS /////////////
