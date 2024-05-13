@@ -61,11 +61,13 @@ const formatconverter = (function() {
     /**
      * Converts a gamefile in JSON format to Infinite Chess Notation.
      * @param {Object} longformat - The gamefile in JSON format
-     * @param {number} compact_moves - Optional. Number between 0-2 for how compact you want the resulting ICN (0 = least compact, pretty. 1: moderately compact. 2: most compact, no 'x','+', or '#') Default: 0
-     * @param {boolean} [make_new_lines] - Optional. Boolean specifying whether linebreaks should be included in the output string. Default: true
+     * @param {Object} [options] - Configuration options for the output format
+     * @param {number} [options.compact_moves=0] - Optional. Number between 0-2 for how compact you want the resulting ICN (0 = least compact, pretty. 1: moderately compact. 2: most compact, no 'x','+', or '#').
+     * @param {boolean} [options.make_new_lines=true] - Optional. Boolean specifying whether linebreaks should be included in the output string.
+     * @param {boolean} [options.specifyPosition=true] - Optional. If false, the ICN won't contain the starting position, that can be deduced from the Variant and Date metadata. This is useful for compressing server logs.
      * @returns {string} The ICN of the gamefile as a string
      */
-    function LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true){
+    function LongToShort_Format(longformat, { compact_moves = 0, make_new_lines = true, specifyPosition = true } = {}){
         let shortformat = "";
         let whitespace = (make_new_lines ? "\n" : " ");
         // metadata
@@ -172,12 +174,14 @@ const formatconverter = (function() {
         if (added_extras) shortformat += `${JSON.stringify(extraGameRules)} `;
 
         // position
-        if (isStartingPositionInLongFormat(longformat.startingPosition)) {
-            shortformat += LongToShort_Position(longformat.startingPosition, longformat.specialRights);
-        } else { // Already in short format!
-            shortformat += longformat.startingPosition
+        if (specifyPosition) {
+            if (isStartingPositionInLongFormat(longformat.startingPosition)) {
+                shortformat += LongToShort_Position(longformat.startingPosition, longformat.specialRights);
+            } else { // Already in short format!
+                shortformat += longformat.startingPosition
+            }
+            if (longformat["moves"]) shortformat += `${whitespace}${whitespace}`; // Add more spacing for the next part
         }
-        if (longformat["moves"]) shortformat += `${whitespace}${whitespace}`; // Add more spacing for the next part
 
         // moves
         if (longformat["moves"]){
@@ -372,215 +376,219 @@ const formatconverter = (function() {
 
             //moves - conversion stops here
             if(/^(([0-9]+\.)|([a-zA-Z]*-?[0-9]+,-?[0-9]+[\s]*(x|>)+))/.test(string)){
-                let shortmoves = (string + "  "+ shortformat).trimEnd();
-                longformat["moves"] = [];
-
-                shortmoves.replace(/[\!\?=]/g,"");
-                while (shortmoves.indexOf("\{") > -1){
-                    let start_index = shortmoves.indexOf("\{");
-                    let end_index = shortmoves.indexOf("\}");
-                    if (end_index == -1) throw new Error("Unclosed \{ found.");
-                    shortmoves = shortmoves.slice(0,start_index) + "|" + shortmoves.slice(end_index+1);
-                }
-                shortmoves = shortmoves.match(/[a-zA-Z]*-?[0-9]+,-?[0-9]+[\s]*(x|>)+[\s]*-?[0-9]+,-?[0-9]+[^\|\.0-9]*/g);
-
-                if (!shortmoves){
-                    delete longformat["moves"];
-                    return longformat;
-                }
-
-                /*
-                let runningCoordinates = {}; // contains current piece type at coordinates, and "undefined" if piece no longer on that square
-                let wasWhiteDoublePawnMove = false; // boolean specifying if previous move was double pawn move by white
-                let wasBlackDoublePawnMove = false; // boolean specifying if previous move was double pawn move by black
-                let pawnEndString; // end square of previous pawn move
-                if (reconstruct_optional_move_flags){
-                    if (!longformat["startingPosition"]){
-                        throw new Error("Moves have to be reconstructed but no starting position submitted!");
-                    }
-                    
-                    if (longformat["enpassant"]){
-                        pawnEndString = longformat["enpassant"].toString();
-                        if (!longformat["turn"]){
-                            wasBlackDoublePawnMove = true;
-                        } else if (longformat["turn"] == "white"){
-                            wasBlackDoublePawnMove = true;
-                        } else if (longformat["turn"] == "black"){
-                            wasWhiteDoublePawnMove = true;
-                        }
-                    }
-                }
-                */
-
-                for (let i = 0; i < shortmoves.length; i++){
-                    let coords = shortmoves[i].match(/-?[0-9]+,-?[0-9]+/g);
-                    let startString = coords[0];
-                    let endString = coords[1];
-
-                    let suffix_index = shortmoves[i].lastIndexOf(endString) + endString.length;
-                    let suffix = shortmoves[i].slice(suffix_index).trimStart().trimEnd();
-
-                    // simplified longmoves (comment out next 2 lines and uncomment block below to get back old behavior)
-                    let promotedPiece = ( /[a-zA-Z]+/.test(suffix) ? suffix.match(/[a-zA-Z]+/) : "");
-                    longformat["moves"].push(`${startString}>${endString}${promotedPiece}`);
-
-                    /*
-                    let longmove = {};
-                    let startCoords = getCoordsFromString(startString);
-                    let endCoords = getCoordsFromString(endString);
-
-                    let isCheck = false;
-                    let isMate = false;
-                    if (trust_check_and_mate_symbols){
-                        if (suffix.match(/\+/g)) isCheck = true;
-                        if (suffix.match(/\#/g)){
-                            isCheck = true;
-                            isMate = true;
-                        }
-                    }
-
-                    let isPromotion = false;
-                    let promotedPiece = ( /[a-zA-Z]+/.test(suffix) ? suffix.match(/[a-zA-Z]+/) : "");
-                    if (promotedPiece != ""){
-                        isPromotion = true;
-                        try{
-                            promotedPiece = ShortToLong_Piece(promotedPiece);
-                        } catch(e) {
-                            // promoted piece defaults to Q or q if no valid promoted piece found
-                            promotedPiece = (endCoords[1] > startCoords[1] ? "queensW" : "queensB");
-                        }
-                    }
-
-                    let movedPiece;
-                    if (reconstruct_optional_move_flags){
-                        if (runningCoordinates[startString]){
-                            movedPiece =`${runningCoordinates[startString]}`;
-                        } else{
-                            movedPiece =`${longformat["startingPosition"][startString]}`;
-                        }
-                        runningCoordinates[startString] = undefined;
-                        // moved piece defaults to Q if invalid:
-                        movedPiece = (movedPiece == "" || movedPiece == "null" || movedPiece == "undefined" ? "queensW" : movedPiece);
-                        longmove["type"] = movedPiece;
-                    }
-                    
-                    longmove["startCoords"] = startCoords;
-                    longmove["endCoords"] = endCoords;
-
-                    // capture and en passant handling
-                    if (reconstruct_optional_move_flags){
-                        let capturedPiece;
-                        if(runningCoordinates[endString]){
-                            capturedPiece = `${runningCoordinates[endString]}`;
-                            // captured piece defaults to Q if invalid:
-                            capturedPiece = (capturedPiece == "" || capturedPiece == "null" || capturedPiece == "undefined" ? "queensW" : capturedPiece);
-                            longmove["captured"] = capturedPiece;
-                        } else if (longformat["startingPosition"][endString] && !(endString in runningCoordinates)){
-                            capturedPiece = `${longformat["startingPosition"][endString]}`;
-                            // captured piece defaults to Q if invalid:
-                            capturedPiece = (capturedPiece == "" || capturedPiece == "null" || capturedPiece == "undefined" ? "queensW" : capturedPiece);
-                            longmove["captured"] = capturedPiece;
-                        } else if (movedPiece.slice(0, -1) == "pawns" && startCoords[0] != endCoords[0] && startCoords[1] != endCoords[1]){
-                            // En passant (no piece was directly captured but pawn moved diagonally)
-                            if (runningCoordinates[pawnEndString]){
-                                capturedPiece = `${runningCoordinates[pawnEndString]}`;
-                            } else {
-                                capturedPiece = `${longformat["startingPosition"][pawnEndString]}`;
-                            }
-                            if (wasWhiteDoublePawnMove || wasBlackDoublePawnMove){
-                                runningCoordinates[pawnEndString] = undefined;
-                                // captured piece defaults to Q if invalid:
-                                capturedPiece = (capturedPiece == "" || capturedPiece == "null" || capturedPiece == "undefined" ? "queensW" : capturedPiece);
-                                longmove["captured"] = capturedPiece;
-                                longmove["enpassant"] = (wasWhiteDoublePawnMove ? 1 : -1);
-                            }
-                        }
-                    }
-
-                    // promotion handling
-                    if (isPromotion){
-                        longmove["promotion"] = promotedPiece;
-                        if (reconstruct_optional_move_flags) runningCoordinates[endString] = promotedPiece;
-                    } else{
-                        if (reconstruct_optional_move_flags) runningCoordinates[endString] = movedPiece;
-                    }
-
-                    // detect if move is double pawn move, i.e. if it allows en passant next move
-                    if (reconstruct_optional_move_flags){
-                        if (movedPiece.slice(0, -1) == "pawns"){
-                            if (startCoords[1] - endCoords[1] < -1){
-                                wasWhiteDoublePawnMove = true;
-                                wasBlackDoublePawnMove = false;
-                                pawnEndString = `${endString}`;
-                            } else if (startCoords[1] - endCoords[1] > 1){
-                                wasWhiteDoublePawnMove = false;
-                                wasBlackDoublePawnMove = true;
-                                pawnEndString = `${endString}`;
-                            } else{
-                                wasWhiteDoublePawnMove = false;
-                                wasBlackDoublePawnMove = false;
-                            }
-                        } else{
-                            wasWhiteDoublePawnMove = false;
-                            wasBlackDoublePawnMove = false;
-                        }
-                    }
-
-                    // castling handling
-                    if (reconstruct_optional_move_flags){
-                        if (movedPiece.slice(0, -1) == "kings"){
-                            const xmove = endCoords[0] - startCoords[0];
-                            const ymove = endCoords[1] - startCoords[1];
-                            if (Math.abs(xmove) === 2 && ymove === 0){
-                                let castle = {};
-                                let castleCandidate = "";
-                                for (let coordinate in longformat["specialRights"]){
-                                    if (longformat["startingPosition"][coordinate]  && !(coordinate in runningCoordinates)){ // can only castle if unmoved in this game
-                                        let coordinateVec = getCoordsFromString(coordinate);
-                                        if (coordinateVec[1] == startCoords[1]){ // can only castle if same y coordinate
-                                            if ((coordinateVec[0] > startCoords[0] && xmove > 1) || (coordinateVec[0] < startCoords[0] && xmove < 1)) {
-                                                if (castleCandidate == ""){
-                                                    castleCandidate = coordinateVec;
-                                                } else{
-                                                    if ((xmove > 1 && castleCandidate[0] > coordinateVec[0]) || (xmove < 1 && castleCandidate[1] < coordinateVec[0])){
-                                                        castleCandidate = coordinateVec;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                if (castleCandidate != ""){
-                                    castle["dir"] = (xmove > 1 ? 1 : -1);
-                                    castle["coord"] = castleCandidate;
-                                    longmove["castle"] = castle;
-                                    let castleString = castleCandidate.toString();
-                                    runningCoordinates[`${(parseInt(endCoords[0])-castle["dir"]).toString()},${endCoords[1].toString()}`] = `${longformat["startingPosition"][castleString]}`;
-                                    runningCoordinates[castleString] = undefined;
-                                }
-                            }
-                        }
-                    }
-
-                    // check and mate
-                    if (trust_check_and_mate_symbols){
-                        if (isCheck){
-                            longmove["check"] = true;
-                            if (isMate){
-                                longmove["mate"] = true;
-                            }
-                        }
-                    }
-                    
-                    longformat["moves"].push(longmove);
-                    */
-                }
+                const moves = convertShortMovesToLong(string, shortformat)
+                if (moves.length > 0) longformat.moves = moves;
                 if (!longformat.gameRules.winConditions) longformat.gameRules.winConditions = { white: ['checkmate'], black: ['checkmate'] } // Default win conditions if none specified
                 return longformat;
             }
         }
         if (!longformat.gameRules.winConditions) longformat.gameRules.winConditions = { white: ['checkmate'], black: ['checkmate'] } // Default win conditions if none specified
         return longformat;
+    }
+
+    function convertShortMovesToLong(string, shortformat) {
+        let shortmoves = (string + "  "+ shortformat).trimEnd();
+        const longmoves = [];
+
+        shortmoves.replace(/[\!\?=]/g,"");
+        while (shortmoves.indexOf("\{") > -1){
+            let start_index = shortmoves.indexOf("\{");
+            let end_index = shortmoves.indexOf("\}");
+            if (end_index == -1) throw new Error("Unclosed \{ found.");
+            shortmoves = shortmoves.slice(0,start_index) + "|" + shortmoves.slice(end_index+1);
+        }
+        shortmoves = shortmoves.match(/[a-zA-Z]*-?[0-9]+,-?[0-9]+[\s]*(x|>)+[\s]*-?[0-9]+,-?[0-9]+[^\|\.0-9]*/g);
+
+        if (!shortmoves) return longmoves;
+
+        /*
+        let runningCoordinates = {}; // contains current piece type at coordinates, and "undefined" if piece no longer on that square
+        let wasWhiteDoublePawnMove = false; // boolean specifying if previous move was double pawn move by white
+        let wasBlackDoublePawnMove = false; // boolean specifying if previous move was double pawn move by black
+        let pawnEndString; // end square of previous pawn move
+        if (reconstruct_optional_move_flags){
+            if (!longformat["startingPosition"]){
+                throw new Error("Moves have to be reconstructed but no starting position submitted!");
+            }
+            
+            if (longformat["enpassant"]){
+                pawnEndString = longformat["enpassant"].toString();
+                if (!longformat["turn"]){
+                    wasBlackDoublePawnMove = true;
+                } else if (longformat["turn"] == "white"){
+                    wasBlackDoublePawnMove = true;
+                } else if (longformat["turn"] == "black"){
+                    wasWhiteDoublePawnMove = true;
+                }
+            }
+        }
+        */
+
+        for (let i = 0; i < shortmoves.length; i++){
+            let coords = shortmoves[i].match(/-?[0-9]+,-?[0-9]+/g);
+            let startString = coords[0];
+            let endString = coords[1];
+
+            let suffix_index = shortmoves[i].lastIndexOf(endString) + endString.length;
+            let suffix = shortmoves[i].slice(suffix_index).trimStart().trimEnd();
+
+            // simplified longmoves (comment out next 2 lines and uncomment block below to get back old behavior)
+            let promotedPiece = ( /[a-zA-Z]+/.test(suffix) ? suffix.match(/[a-zA-Z]+/) : "");
+            longmoves.push(`${startString}>${endString}${promotedPiece}`);
+
+            /*
+            let longmove = {};
+            let startCoords = getCoordsFromString(startString);
+            let endCoords = getCoordsFromString(endString);
+
+            let isCheck = false;
+            let isMate = false;
+            if (trust_check_and_mate_symbols){
+                if (suffix.match(/\+/g)) isCheck = true;
+                if (suffix.match(/\#/g)){
+                    isCheck = true;
+                    isMate = true;
+                }
+            }
+
+            let isPromotion = false;
+            let promotedPiece = ( /[a-zA-Z]+/.test(suffix) ? suffix.match(/[a-zA-Z]+/) : "");
+            if (promotedPiece != ""){
+                isPromotion = true;
+                try{
+                    promotedPiece = ShortToLong_Piece(promotedPiece);
+                } catch(e) {
+                    // promoted piece defaults to Q or q if no valid promoted piece found
+                    promotedPiece = (endCoords[1] > startCoords[1] ? "queensW" : "queensB");
+                }
+            }
+
+            let movedPiece;
+            if (reconstruct_optional_move_flags){
+                if (runningCoordinates[startString]){
+                    movedPiece =`${runningCoordinates[startString]}`;
+                } else{
+                    movedPiece =`${longformat["startingPosition"][startString]}`;
+                }
+                runningCoordinates[startString] = undefined;
+                // moved piece defaults to Q if invalid:
+                movedPiece = (movedPiece == "" || movedPiece == "null" || movedPiece == "undefined" ? "queensW" : movedPiece);
+                longmove["type"] = movedPiece;
+            }
+            
+            longmove["startCoords"] = startCoords;
+            longmove["endCoords"] = endCoords;
+
+            // capture and en passant handling
+            if (reconstruct_optional_move_flags){
+                let capturedPiece;
+                if(runningCoordinates[endString]){
+                    capturedPiece = `${runningCoordinates[endString]}`;
+                    // captured piece defaults to Q if invalid:
+                    capturedPiece = (capturedPiece == "" || capturedPiece == "null" || capturedPiece == "undefined" ? "queensW" : capturedPiece);
+                    longmove["captured"] = capturedPiece;
+                } else if (longformat["startingPosition"][endString] && !(endString in runningCoordinates)){
+                    capturedPiece = `${longformat["startingPosition"][endString]}`;
+                    // captured piece defaults to Q if invalid:
+                    capturedPiece = (capturedPiece == "" || capturedPiece == "null" || capturedPiece == "undefined" ? "queensW" : capturedPiece);
+                    longmove["captured"] = capturedPiece;
+                } else if (movedPiece.slice(0, -1) == "pawns" && startCoords[0] != endCoords[0] && startCoords[1] != endCoords[1]){
+                    // En passant (no piece was directly captured but pawn moved diagonally)
+                    if (runningCoordinates[pawnEndString]){
+                        capturedPiece = `${runningCoordinates[pawnEndString]}`;
+                    } else {
+                        capturedPiece = `${longformat["startingPosition"][pawnEndString]}`;
+                    }
+                    if (wasWhiteDoublePawnMove || wasBlackDoublePawnMove){
+                        runningCoordinates[pawnEndString] = undefined;
+                        // captured piece defaults to Q if invalid:
+                        capturedPiece = (capturedPiece == "" || capturedPiece == "null" || capturedPiece == "undefined" ? "queensW" : capturedPiece);
+                        longmove["captured"] = capturedPiece;
+                        longmove["enpassant"] = (wasWhiteDoublePawnMove ? 1 : -1);
+                    }
+                }
+            }
+
+            // promotion handling
+            if (isPromotion){
+                longmove["promotion"] = promotedPiece;
+                if (reconstruct_optional_move_flags) runningCoordinates[endString] = promotedPiece;
+            } else{
+                if (reconstruct_optional_move_flags) runningCoordinates[endString] = movedPiece;
+            }
+
+            // detect if move is double pawn move, i.e. if it allows en passant next move
+            if (reconstruct_optional_move_flags){
+                if (movedPiece.slice(0, -1) == "pawns"){
+                    if (startCoords[1] - endCoords[1] < -1){
+                        wasWhiteDoublePawnMove = true;
+                        wasBlackDoublePawnMove = false;
+                        pawnEndString = `${endString}`;
+                    } else if (startCoords[1] - endCoords[1] > 1){
+                        wasWhiteDoublePawnMove = false;
+                        wasBlackDoublePawnMove = true;
+                        pawnEndString = `${endString}`;
+                    } else{
+                        wasWhiteDoublePawnMove = false;
+                        wasBlackDoublePawnMove = false;
+                    }
+                } else{
+                    wasWhiteDoublePawnMove = false;
+                    wasBlackDoublePawnMove = false;
+                }
+            }
+
+            // castling handling
+            if (reconstruct_optional_move_flags){
+                if (movedPiece.slice(0, -1) == "kings"){
+                    const xmove = endCoords[0] - startCoords[0];
+                    const ymove = endCoords[1] - startCoords[1];
+                    if (Math.abs(xmove) === 2 && ymove === 0){
+                        let castle = {};
+                        let castleCandidate = "";
+                        for (let coordinate in longformat["specialRights"]){
+                            if (longformat["startingPosition"][coordinate]  && !(coordinate in runningCoordinates)){ // can only castle if unmoved in this game
+                                let coordinateVec = getCoordsFromString(coordinate);
+                                if (coordinateVec[1] == startCoords[1]){ // can only castle if same y coordinate
+                                    if ((coordinateVec[0] > startCoords[0] && xmove > 1) || (coordinateVec[0] < startCoords[0] && xmove < 1)) {
+                                        if (castleCandidate == ""){
+                                            castleCandidate = coordinateVec;
+                                        } else{
+                                            if ((xmove > 1 && castleCandidate[0] > coordinateVec[0]) || (xmove < 1 && castleCandidate[1] < coordinateVec[0])){
+                                                castleCandidate = coordinateVec;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (castleCandidate != ""){
+                            castle["dir"] = (xmove > 1 ? 1 : -1);
+                            castle["coord"] = castleCandidate;
+                            longmove["castle"] = castle;
+                            let castleString = castleCandidate.toString();
+                            runningCoordinates[`${(parseInt(endCoords[0])-castle["dir"]).toString()},${endCoords[1].toString()}`] = `${longformat["startingPosition"][castleString]}`;
+                            runningCoordinates[castleString] = undefined;
+                        }
+                    }
+                }
+            }
+
+            // check and mate
+            if (trust_check_and_mate_symbols){
+                if (isCheck){
+                    longmove["check"] = true;
+                    if (isMate){
+                        longmove["mate"] = true;
+                    }
+                }
+            }
+            
+            longmoves.push(longmove);
+            */
+        }
+
+        return longmoves;
     }
 
     /**
@@ -891,12 +899,12 @@ const formatconverter = (function() {
     try{
         // Example game converted from long to short format in three different levels of move compactness
         const gameExample = 
-        {"metadata":{"Variant":"Classical","Version":"1","White":"Tom","Black":"Ben","Clock":"10+5","Date":"2024/03/17 13:42:06","Result":"0-1","Condition":"checkmate"},"turn":"white","moveRule":"0/100","fullMove":1,"gameRules":{"slideLimit":"Infinity","promotionRanks":[8,1],"promotionsAllowed":{"white":["queens","rooks","bishops","knights"],"black":["queens","rooks","bishops","knights"]},"ovenTemperature": 350,"winConditions":{"white":["checkmate"],"black":["checkmate"]}},"specialRights":{"1,2":true,"2,2":true,"3,2":true,"4,2":true,"5,2":true,"6,2":true,"7,2":true,"8,2":true,"1,7":true,"2,7":true,"3,7":true,"4,7":true,"5,7":true,"6,7":true,"7,7":true,"8,7":true,"1,1":true,"5,1":true,"8,1":true,"1,8":true,"5,8":true,"8,8":true},"startingPosition":{"1,2":"pawnsW","2,2":"pawnsW","3,2":"pawnsW","4,2":"pawnsW","5,2":"pawnsW","6,2":"pawnsW","7,2":"pawnsW","8,2":"pawnsW","1,7":"pawnsB","2,7":"pawnsB","3,7":"pawnsB","4,7":"pawnsB","5,7":"pawnsB","6,7":"pawnsB","7,7":"pawnsB","8,7":"pawnsB","1,1":"rooksW","8,1":"rooksW","1,8":"rooksB","8,8":"rooksB","2,1":"knightsW","7,1":"knightsW","2,8":"knightsB","7,8":"knightsB","3,1":"bishopsW","6,1":"bishopsW","3,8":"bishopsB","6,8":"bishopsB","4,1":"queensW","4,8":"queensB","5,1":"kingsW","5,8":"kingsB"},"moves":[{"type":"pawnsW","startCoords":[4,2],"endCoords":[4,4]},{"type":"pawnsB","startCoords":[4,7],"endCoords":[4,6]},{"type":"pawnsW","startCoords":[4,4],"endCoords":[4,5]},{"type":"pawnsB","startCoords":[3,7],"endCoords":[3,5]},{"type":"pawnsW","startCoords":[4,5],"endCoords":[3,6],"captured":"pawnsB","enpassant":-1},{"type":"bishopsB","startCoords":[6,8],"endCoords":[3,11]},{"type":"pawnsW","startCoords":[3,6],"endCoords":[2,7],"captured":"pawnsB"},{"type":"bishopsB","startCoords":[3,11],"endCoords":[-4,4]},{"type":"pawnsW","startCoords":[2,7],"endCoords":[1,8],"captured":"rooksB","promotion":"queensW"},{"type":"bishopsB","startCoords":[-4,4],"endCoords":[2,-2],"check":true},{"type":"kingsW","startCoords":[5,1],"endCoords":[4,2]},{"type":"knightsB","startCoords":[7,8],"endCoords":[6,6]},{"type":"queensW","startCoords":[1,8],"endCoords":[2,8],"captured":"knightsB"},{"type":"kingsB","startCoords":[5,8],"endCoords":[7,8],"castle":{"dir":1,"coord":[8,8]}},{"type":"queensW","startCoords":[2,8],"endCoords":[1,7],"captured":"pawnsB"},{"type":"queensB","startCoords":[4,8],"endCoords":[0,4]},{"type":"queensW","startCoords":[1,7],"endCoords":[7,13],"check":true},{"type":"kingsB","startCoords":[7,8],"endCoords":[8,8]},{"type":"queensW","startCoords":[7,13],"endCoords":[7,7],"captured":"pawnsB","check":true},{"type":"kingsB","startCoords":[8,8],"endCoords":[7,7],"captured":"queensW"},{"type":"pawnsW","startCoords":[8,2],"endCoords":[8,4]},{"type":"queensB","startCoords":[0,4],"endCoords":[4,4],"check":true,"mate":true}]}
-        const outputNice = LongToShort_Format(gameExample, 0, true);
+        {"metadata":{"Variant":"Classical","Version":"1","White":"Tom","Black":"Ben","Clock":"10+5","Date":"2024/03/17 13:42:06","Result":"0-1","Condition":"checkmate"},"turn":"white","moveRule":"0/100","fullMove":1,"gameRules":{"slideLimit":16,"promotionRanks":[8,1],"promotionsAllowed":{"white":["queens","rooks","bishops","knights"],"black":["queens","rooks","bishops","knights"]},"ovenTemperature": 350,"winConditions":{"white":["checkmate"],"black":["checkmate"]}},"specialRights":{"1,2":true,"2,2":true,"3,2":true,"4,2":true,"5,2":true,"6,2":true,"7,2":true,"8,2":true,"1,7":true,"2,7":true,"3,7":true,"4,7":true,"5,7":true,"6,7":true,"7,7":true,"8,7":true,"1,1":true,"5,1":true,"8,1":true,"1,8":true,"5,8":true,"8,8":true},"startingPosition":{"1,2":"pawnsW","2,2":"pawnsW","3,2":"pawnsW","4,2":"pawnsW","5,2":"pawnsW","6,2":"pawnsW","7,2":"pawnsW","8,2":"pawnsW","1,7":"pawnsB","2,7":"pawnsB","3,7":"pawnsB","4,7":"pawnsB","5,7":"pawnsB","6,7":"pawnsB","7,7":"pawnsB","8,7":"pawnsB","1,1":"rooksW","8,1":"rooksW","1,8":"rooksB","8,8":"rooksB","2,1":"knightsW","7,1":"knightsW","2,8":"knightsB","7,8":"knightsB","3,1":"bishopsW","6,1":"bishopsW","3,8":"bishopsB","6,8":"bishopsB","4,1":"queensW","4,8":"queensB","5,1":"kingsW","5,8":"kingsB"},"moves":[{"type":"pawnsW","startCoords":[4,2],"endCoords":[4,4]},{"type":"pawnsB","startCoords":[4,7],"endCoords":[4,6]},{"type":"pawnsW","startCoords":[4,4],"endCoords":[4,5]},{"type":"pawnsB","startCoords":[3,7],"endCoords":[3,5]},{"type":"pawnsW","startCoords":[4,5],"endCoords":[3,6],"captured":"pawnsB","enpassant":-1},{"type":"bishopsB","startCoords":[6,8],"endCoords":[3,11]},{"type":"pawnsW","startCoords":[3,6],"endCoords":[2,7],"captured":"pawnsB"},{"type":"bishopsB","startCoords":[3,11],"endCoords":[-4,4]},{"type":"pawnsW","startCoords":[2,7],"endCoords":[1,8],"captured":"rooksB","promotion":"queensW"},{"type":"bishopsB","startCoords":[-4,4],"endCoords":[2,-2],"check":true},{"type":"kingsW","startCoords":[5,1],"endCoords":[4,2]},{"type":"knightsB","startCoords":[7,8],"endCoords":[6,6]},{"type":"queensW","startCoords":[1,8],"endCoords":[2,8],"captured":"knightsB"},{"type":"kingsB","startCoords":[5,8],"endCoords":[7,8],"castle":{"dir":1,"coord":[8,8]}},{"type":"queensW","startCoords":[2,8],"endCoords":[1,7],"captured":"pawnsB"},{"type":"queensB","startCoords":[4,8],"endCoords":[0,4]},{"type":"queensW","startCoords":[1,7],"endCoords":[7,13],"check":true},{"type":"kingsB","startCoords":[7,8],"endCoords":[8,8]},{"type":"queensW","startCoords":[7,13],"endCoords":[7,7],"captured":"pawnsB","check":true},{"type":"kingsB","startCoords":[8,8],"endCoords":[7,7],"captured":"queensW"},{"type":"pawnsW","startCoords":[8,2],"endCoords":[8,4]},{"type":"queensB","startCoords":[0,4],"endCoords":[4,4],"check":true,"mate":true}]}
+        const outputNice = LongToShort_Format(gameExample);
         console.log("Game in short format with nice moves:\n\n" + outputNice + "\n");
-        const outputMoreCompact = LongToShort_Format(gameExample, 1, true);
+        const outputMoreCompact = LongToShort_Format(gameExample, { compact_moves: 1 });
         console.log("Game in short format with more compact moves:\n\n" + outputMoreCompact + "\n");
-        const outputMostCompact = LongToShort_Format(gameExample, 2, true);
+        const outputMostCompact = LongToShort_Format(gameExample, { compact_moves: 2 });
         console.log("Game in short format with most compact moves:\n\n" + outputMostCompact + "\n");
 
         // Converted back to long format
@@ -906,7 +914,7 @@ const formatconverter = (function() {
         // Position after 21 halfmoves:
         const position = GameToPosition(gameExample, 21, false);
         console.log("Position after 21 half moves in long format:\n\n" + JSON.stringify(position));
-        // console.log("Position after 21 half moves in short format:\n\n" + LongToShort_Format(position));
+        console.log("Position after 21 half moves in short format:\n\n" + LongToShort_Format(position));
 
         // String test:
         console.log('\nTest:\n\n' + JSON.stringify(ShortToLong_Format(' 3,4 3 w 3232098/2319080123213 K3,3+ {"asdds}sd a": 2332, "{nes(|)t}" : { "nes t2": "233 22" } } [asa: adsdsa] checkmate,asd (|4;q) ')) + '\n');
@@ -938,7 +946,7 @@ const formatconverter = (function() {
             const gameExampleLong = JSON.parse(data);
             console.log("\nTimer Start with " + Object.keys(gameExampleLong.startingPosition).length + " pieces and " + gameExampleLong.moves.length + " moves.");
             const start_time = Date.now();
-            const outputLong = LongToShort_Format(gameExampleLong, 0, true);
+            const outputLong = LongToShort_Format(gameExampleLong);
             const med_time = Date.now();
             console.log("Long to short: " + (med_time - start_time) / 1000);
             ShortToLong_Format(outputLong, true, true);
