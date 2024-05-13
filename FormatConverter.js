@@ -966,7 +966,8 @@ const formatconverter = (function() {
         LongToShort_Position,
         LongToShort_Position_FromGamerules,
         getStartingPositionAndSpecialRightsFromShortPosition,
-        generateSpecialRights
+        generateSpecialRights,
+        convertShortMovesToLong
     })
     
 })();
