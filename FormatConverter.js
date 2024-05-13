@@ -184,49 +184,57 @@ const formatconverter = (function() {
         }
 
         // moves
-        if (longformat["moves"]){
-            let shortmoves = "";
-            for (let i = 0; i < longformat["moves"].length; i++){
-                let longmove = longformat["moves"][i];
-                if (next_move == "w" && compact_moves == 0){
-                    shortmoves += (!make_new_lines && i != 0 ? " " : "");
-                    shortmoves += fullmove.toString() + ". ";
-                } else if (compact_moves == 0){
-                    shortmoves += (i == 0 ? fullmove.toString() + ".   ...   | " : " | ");
-                } else {
-                    shortmoves += (i == 0 ? "" : "|");
-                }
-                shortmoves += (longmove["type"] && (compact_moves == 0 || compact_moves == 1) ? LongToShort_Piece(longmove["type"]) : "");
-                shortmoves += longmove["startCoords"].toString();
-                shortmoves += (compact_moves == 0 ? " " : "");
-                shortmoves += (longmove["captured"] && (compact_moves == 0 || compact_moves == 1) ? "x" : ">");
-                shortmoves += (compact_moves == 0 ? " " : "");
-                shortmoves += longmove["endCoords"].toString();
-                shortmoves += (compact_moves == 0 ? " " : "");
-                if (longmove["promotion"]){
-                    shortmoves += (compact_moves == 0 || compact_moves == 1? "=" : "");
-                    shortmoves += LongToShort_Piece(longmove["promotion"]);
-                }
-                if (longmove["mate"] && (compact_moves == 0 || compact_moves == 1)){
-                    shortmoves += "\#";
-                } else if (longmove["check"] && (compact_moves == 0 || compact_moves == 1)){
-                    shortmoves += "+";
-                }
-                shortmoves = shortmoves.trimEnd();
-                if (next_move == "w"){
-                    next_move = "b";
-                } else{
-                    next_move = "w";
-                    fullmove += 1;
-                    if (i != longformat["moves"].length - 1 && compact_moves == 0){
-                        shortmoves += (make_new_lines ? "\n" : " |");
-                    }
+        if (longformat.moves) shortformat += longToShortMoves(longformat.moves, { next_move, fullmove, compact_moves, make_new_lines });
+
+        return shortformat;
+    }
+
+    /**
+     * Converts moves from longest format `{ startCoords, endCoords}` to short string format `1,2>3,4`
+     * @param {Object} longmoves 
+     * @param {Object} options - Contains the `next_move` and `compact_moves` parameters.
+     */
+    function longToShortMoves(longmoves, { next_move, fullmove, make_new_lines, compact_moves }) {
+        let shortmoves = "";
+        for (let i = 0; i < longmoves.length; i++){
+            let longmove = longmoves[i];
+            if (next_move == "w" && compact_moves == 0){
+                shortmoves += (!make_new_lines && i != 0 ? " " : "");
+                shortmoves += fullmove.toString() + ". ";
+            } else if (compact_moves == 0){
+                shortmoves += (i == 0 ? fullmove.toString() + ".   ...   | " : " | ");
+            } else {
+                shortmoves += (i == 0 ? "" : "|");
+            }
+            shortmoves += (longmove["type"] && (compact_moves == 0 || compact_moves == 1) ? LongToShort_Piece(longmove["type"]) : "");
+            shortmoves += longmove["startCoords"].toString();
+            shortmoves += (compact_moves == 0 ? " " : "");
+            shortmoves += (longmove["captured"] && (compact_moves == 0 || compact_moves == 1) ? "x" : ">");
+            shortmoves += (compact_moves == 0 ? " " : "");
+            shortmoves += longmove["endCoords"].toString();
+            shortmoves += (compact_moves == 0 ? " " : "");
+            if (longmove["promotion"]){
+                shortmoves += (compact_moves == 0 || compact_moves == 1? "=" : "");
+                shortmoves += LongToShort_Piece(longmove["promotion"]);
+            }
+            if (longmove["mate"] && (compact_moves == 0 || compact_moves == 1)){
+                shortmoves += "\#";
+            } else if (longmove["check"] && (compact_moves == 0 || compact_moves == 1)){
+                shortmoves += "+";
+            }
+            shortmoves = shortmoves.trimEnd();
+            if (next_move == "w"){
+                next_move = "b";
+            } else{
+                next_move = "w";
+                fullmove += 1;
+                if (i != longmoves.length - 1 && compact_moves == 0){
+                    shortmoves += (make_new_lines ? "\n" : " |");
                 }
             }
-            shortformat += shortmoves.trimEnd();
         }
-        
-        return shortformat;
+
+        return shortmoves.trimEnd();
     }
 
     /**
@@ -967,7 +975,8 @@ const formatconverter = (function() {
         LongToShort_Position_FromGamerules,
         getStartingPositionAndSpecialRightsFromShortPosition,
         generateSpecialRights,
-        convertShortMovesToLong
+        convertShortMovesToLong,
+        longToShortMoves
     })
     
 })();
