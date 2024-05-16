@@ -190,11 +190,15 @@ const formatconverter = (function() {
     }
 
     /**
-     * Converts moves from longest format `{ startCoords, endCoords}` to short string format `1,2>3,4`
+     * Converts moves from either the format `[{ startCoords, endCoords }, ...]` or `['1,2>3,4','5,6>7,8N']`
+     * to short string format `1,2>3,4|5,6>7,8N`
      * @param {Object} longmoves 
      * @param {Object} options - Contains the `next_move` and `compact_moves` parameters.
      */
     function longToShortMoves(longmoves, { next_move, fullmove, make_new_lines, compact_moves }) {
+        // If the moves are provided like: ['1,2>3,4','5,6>7,8N'], then quick return!
+        if (typeof longmoves[0] === 'string') return longmoves.join('|')
+
         let shortmoves = "";
         for (let i = 0; i < longmoves.length; i++){
             let longmove = longmoves[i];
