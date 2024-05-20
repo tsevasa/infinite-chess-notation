@@ -155,7 +155,7 @@ const formatconverter = (function() {
                     } else wins_are_equal = false;
                     
                     if (wins_are_equal) {
-                        if (whitewins[0] !== 'checkmate') shortformat += `${whitewins.toString()} `;
+                        if (whitewins.length > 1 || whitewins[0] !== 'checkmate') shortformat += `${whitewins.toString()} `;
                     } else {
                         shortformat += `(${whitewins.toString()}|${blackwins.toString()}) `;
                     }
