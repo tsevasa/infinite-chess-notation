@@ -305,13 +305,15 @@ const formatconverter = (function() {
             // promotion lines
             if(/^\(((()|([^\(\)\|]*\|)-?[0-9]+)|(\|\)$))/.test(string)){
                 if (!longformat["gameRules"]["promotionRanks"]){
-                    string = string.replace(/[\(\)]+/g,"").split("|");
+                    string = string.replace(/[\(\)]+/g,"").split("|"); // ["8","1"]
+                    if (string.length !== 2) throw new Error('Promotion ranks needs exactly 2 values')
                     longformat["gameRules"]["promotionRanks"] = [];
                     longformat["gameRules"]["promotionsAllowed"] = { white: [], black: [] };
                     for (let i = 0; i < 2; i++){
                         let color = (i==0 ? "white" : "black");
                         if (string[i] != "" && string[i] != null){
                             let promotionLine = (string[i].indexOf(";") == -1 ? parseInt(string[i]) : parseInt(string[i].split(";")[0]));
+                            if (isNaN(promotionLine)) throw new Error('Promotion rank is NaN')
                             longformat["gameRules"]["promotionRanks"].push(promotionLine);
                             string[i] = string[i].split(";");
                             if (string[i].length == 1){
