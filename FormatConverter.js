@@ -896,7 +896,7 @@ const formatconverter = (function() {
      * @returns {Object | string | number | bigint | boolean} The copied object
      */
     function deepCopyObject(src) {
-        if (typeof src !== "object") return src;
+        if (typeof src !== "object" || src === null) return src;
         
         let copy = Array.isArray(src) ? [] : {}; // Create an empty array or object
         
