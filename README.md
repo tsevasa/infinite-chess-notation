@@ -28,7 +28,7 @@ In total, a move can look like `12. P-5,6x-6,7 =R+ !? {Interesting underpromotio
 
 Most importantly, a **position** requires a list of pieces with their respective coordinates. This is achieved by simply listing the placement of all pieces in the form `K3,4`, separated by the symbol `|` respectively. In total, a piece list looks like
 ```
-K3,4|Q3,5|P3,7|R9,4|k-2,-10|q-2,-9|r-3,4
+K3,4|Q3,5|P3,7|R9,4|k-2,-10|q-2,-9|r-3,5
 ```
 
 The piece list can be enhanced with these custom rules:
