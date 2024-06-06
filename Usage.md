@@ -17,7 +17,7 @@ From here on, we distinguish between two notation formats:
     "Clock":"10+5",
     "Date":"2024/03/17 13:42:06",
     "Result":"0-1",
-    "Condition":"checkmate"},
+    "Condition":"Checkmate"},
 "turn":"white",
 "moveRule":"0/100",
 "fullMove":1,
