@@ -17,7 +17,7 @@ From here on, we distinguish between two notation formats:
     "Clock":"10+5",
     "Date":"2024/03/17 13:42:06",
     "Result":"0-1",
-    "Condition":"Checkmate"},
+    "Condition":"checkmate"},
 "turn":"white",
 "moveRule":"0/100",
 "fullMove":1,
@@ -35,7 +35,7 @@ The example above showcases the formatting of almost all optional arguments. If 
 
 ## Main functions
 The program has the following main functions:
-- `LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true)` : Given a JSON, this method returns the corresponding position or game in short notation as a string by transforming every JSON entry into its corresponding representation in short format and concatenating them. The method can handle both the usual `moves` format as well as the expanded legacy format. The optional argument `compact_moves` specifies whether the moves outputted are in compact format or expanded (0: least compact, 1: moderately compact, 2: most compact). The optional argument `make_new_lines` specifies whether line breaks should be used at all in the string.
+- `LongToShort_Format(longformat, compact_moves = 0, make_new_lines = true)` : Given a JSON, this method returns the corresponding position or game in short notation as a string by transforming every JSON entry into its corresponding representation in short format and concatenating them. The optional argument `compact_moves` specifies whether the moves outputted are in compact format or expanded (0: least compact, 1: moderately compact, 2: most compact). The optional argument `make_new_lines` specifies whether line breaks should be used at all in the string.
 - `ShortToLong_Format(shortformat)` : Given a string, this method returns an equivalent JSON in long format. The method recognizes all optional arguments in the string with regular expressions, i.e. their order does not matter as long as they are formatted correctly.
 - There are a handful of further auxiliary methods that are well documented in the code.
 
@@ -44,7 +44,7 @@ At the start of the program, you can find the piece name dictionary containing a
 At the end of the program, you can find some example uses of these functions, which were used to generate the game in [README.md](README.md).
 
 ## DEPRECATED: Old legacy format for "moves" entry
-In the example above, `"moves"` gives the list of moves as a simple list of moves in short notation. However, `LongToShort_Format()` still supports the old legacy format below as an input:
+In the example above, `"moves"` gives the list of moves as a simple list of moves in short notation. However, for backwards compatibility reasons, `LongToShort_Format()` also still supports the old legacy format below as an input:
 ```
 {"moves":[
     {"type":"pawnsW","startCoords":[4,2],"endCoords":[4,4]},
@@ -74,4 +74,4 @@ Here, every move specifies the moved piece with `type` and the move's coordinate
 
 The following functions only use this old legacy format:
 - `GameToPosition(longformat, halfmoves = 0, modify_input = false)` : Given the JSON of a game, this method will return a JSON corresponding to a single position from the game, which is at a certain number of halfmoves after the start. This number is specified by the optional argument `halfmoves`. Setting it to `0` will yield the starting position JSON, while setting it to `Infinity` will yield the final position of the game as a JSON. The optional argument `modify_input` specifies whether the input object is modified in the process or not (setting this to `true` is faster, since no deepcopy of the input object is required).
-- `LongToShort_CompactMove(longmove)` and `ShortToLong_CompactMove(shortmove)` : These methods convert a single compact move back and forth from the long to the short format, i.e. `2,-3>2,-4ha` to `{"startCoords":"2,-3","endCoords":"2,-4","promotion":"hawksB"}` and vice versa. Note that this only supports the compact short notation `a,b>c,dX`.
+- `LongToShort_CompactMove(longmove)` and `ShortToLong_CompactMove(shortmove)` : These methods convert a single compact move back and forth from the long legacy format to the short format, i.e. `2,-3>2,-4ha` to `{"startCoords":"2,-3","endCoords":"2,-4","promotion":"hawksB"}` and vice versa. Note that this only supports the compact short notation `a,b>c,dX`.

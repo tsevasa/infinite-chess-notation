@@ -244,11 +244,9 @@ const formatconverter = (function() {
     /**
      * Converts a string in Infinite Chess Notation to gamefile in JSON format
      * @param {string} shortformat - A string in ICN
-     * @param {boolean} [reconstruct_optional_move_flags] - Deprecated. If true, method will reconstruct "type", "captured", "enpassant" and "castle" flags of moves. Default: *true*
-     * @param {boolean} [trust_check_and_mate_symbols] - Deprecated. If true, method will set "check" and "mate" flags of moves based on + and # symbols. Default: *true*
      * @returns {Object} Equivalent gamefile in JSON format
      */
-    function ShortToLong_Format(shortformat/*, reconstruct_optional_move_flags = true, trust_check_and_mate_symbols = true*/){
+    function ShortToLong_Format(shortformat){
         let longformat = {};
         longformat.gameRules = {};
 
@@ -415,29 +413,6 @@ const formatconverter = (function() {
 
         if (!shortmoves) return longmoves;
 
-        /*
-        let runningCoordinates = {}; // contains current piece type at coordinates, and "undefined" if piece no longer on that square
-        let wasWhiteDoublePawnMove = false; // boolean specifying if previous move was double pawn move by white
-        let wasBlackDoublePawnMove = false; // boolean specifying if previous move was double pawn move by black
-        let pawnEndString; // end square of previous pawn move
-        if (reconstruct_optional_move_flags){
-            if (!longformat["startingPosition"]){
-                throw new Error("Moves have to be reconstructed but no starting position submitted!");
-            }
-            
-            if (longformat["enpassant"]){
-                pawnEndString = longformat["enpassant"].toString();
-                if (!longformat["turn"]){
-                    wasBlackDoublePawnMove = true;
-                } else if (longformat["turn"] == "white"){
-                    wasBlackDoublePawnMove = true;
-                } else if (longformat["turn"] == "black"){
-                    wasWhiteDoublePawnMove = true;
-                }
-            }
-        }
-        */
-
         for (let i = 0; i < shortmoves.length; i++){
             let coords = shortmoves[i].match(/-?[0-9]+,-?[0-9]+/g);
             let startString = coords[0];
@@ -446,168 +421,16 @@ const formatconverter = (function() {
             let suffix_index = shortmoves[i].lastIndexOf(endString) + endString.length;
             let suffix = shortmoves[i].slice(suffix_index).trimStart().trimEnd();
 
-            // simplified longmoves (comment out next 2 lines and uncomment block below to get back old behavior)
             let promotedPiece = ( /[a-zA-Z]+/.test(suffix) ? suffix.match(/[a-zA-Z]+/) : "");
             longmoves.push(`${startString}>${endString}${promotedPiece}`);
-
-            /*
-            let longmove = {};
-            let startCoords = getCoordsFromString(startString);
-            let endCoords = getCoordsFromString(endString);
-
-            let isCheck = false;
-            let isMate = false;
-            if (trust_check_and_mate_symbols){
-                if (suffix.match(/\+/g)) isCheck = true;
-                if (suffix.match(/\#/g)){
-                    isCheck = true;
-                    isMate = true;
-                }
-            }
-
-            let isPromotion = false;
-            let promotedPiece = ( /[a-zA-Z]+/.test(suffix) ? suffix.match(/[a-zA-Z]+/) : "");
-            if (promotedPiece != ""){
-                isPromotion = true;
-                try{
-                    promotedPiece = ShortToLong_Piece(promotedPiece);
-                } catch(e) {
-                    // promoted piece defaults to Q or q if no valid promoted piece found
-                    promotedPiece = (endCoords[1] > startCoords[1] ? "queensW" : "queensB");
-                }
-            }
-
-            let movedPiece;
-            if (reconstruct_optional_move_flags){
-                if (runningCoordinates[startString]){
-                    movedPiece =`${runningCoordinates[startString]}`;
-                } else{
-                    movedPiece =`${longformat["startingPosition"][startString]}`;
-                }
-                runningCoordinates[startString] = undefined;
-                // moved piece defaults to Q if invalid:
-                movedPiece = (movedPiece == "" || movedPiece == "null" || movedPiece == "undefined" ? "queensW" : movedPiece);
-                longmove["type"] = movedPiece;
-            }
-            
-            longmove["startCoords"] = startCoords;
-            longmove["endCoords"] = endCoords;
-
-            // capture and en passant handling
-            if (reconstruct_optional_move_flags){
-                let capturedPiece;
-                if(runningCoordinates[endString]){
-                    capturedPiece = `${runningCoordinates[endString]}`;
-                    // captured piece defaults to Q if invalid:
-                    capturedPiece = (capturedPiece == "" || capturedPiece == "null" || capturedPiece == "undefined" ? "queensW" : capturedPiece);
-                    longmove["captured"] = capturedPiece;
-                } else if (longformat["startingPosition"][endString] && !(endString in runningCoordinates)){
-                    capturedPiece = `${longformat["startingPosition"][endString]}`;
-                    // captured piece defaults to Q if invalid:
-                    capturedPiece = (capturedPiece == "" || capturedPiece == "null" || capturedPiece == "undefined" ? "queensW" : capturedPiece);
-                    longmove["captured"] = capturedPiece;
-                } else if (movedPiece.slice(0, -1) == "pawns" && startCoords[0] != endCoords[0] && startCoords[1] != endCoords[1]){
-                    // En passant (no piece was directly captured but pawn moved diagonally)
-                    if (runningCoordinates[pawnEndString]){
-                        capturedPiece = `${runningCoordinates[pawnEndString]}`;
-                    } else {
-                        capturedPiece = `${longformat["startingPosition"][pawnEndString]}`;
-                    }
-                    if (wasWhiteDoublePawnMove || wasBlackDoublePawnMove){
-                        runningCoordinates[pawnEndString] = undefined;
-                        // captured piece defaults to Q if invalid:
-                        capturedPiece = (capturedPiece == "" || capturedPiece == "null" || capturedPiece == "undefined" ? "queensW" : capturedPiece);
-                        longmove["captured"] = capturedPiece;
-                        longmove["enpassant"] = (wasWhiteDoublePawnMove ? 1 : -1);
-                    }
-                }
-            }
-
-            // promotion handling
-            if (isPromotion){
-                longmove["promotion"] = promotedPiece;
-                if (reconstruct_optional_move_flags) runningCoordinates[endString] = promotedPiece;
-            } else{
-                if (reconstruct_optional_move_flags) runningCoordinates[endString] = movedPiece;
-            }
-
-            // detect if move is double pawn move, i.e. if it allows en passant next move
-            if (reconstruct_optional_move_flags){
-                if (movedPiece.slice(0, -1) == "pawns"){
-                    if (startCoords[1] - endCoords[1] < -1){
-                        wasWhiteDoublePawnMove = true;
-                        wasBlackDoublePawnMove = false;
-                        pawnEndString = `${endString}`;
-                    } else if (startCoords[1] - endCoords[1] > 1){
-                        wasWhiteDoublePawnMove = false;
-                        wasBlackDoublePawnMove = true;
-                        pawnEndString = `${endString}`;
-                    } else{
-                        wasWhiteDoublePawnMove = false;
-                        wasBlackDoublePawnMove = false;
-                    }
-                } else{
-                    wasWhiteDoublePawnMove = false;
-                    wasBlackDoublePawnMove = false;
-                }
-            }
-
-            // castling handling
-            if (reconstruct_optional_move_flags){
-                if (movedPiece.slice(0, -1) == "kings"){
-                    const xmove = endCoords[0] - startCoords[0];
-                    const ymove = endCoords[1] - startCoords[1];
-                    if (Math.abs(xmove) === 2 && ymove === 0){
-                        let castle = {};
-                        let castleCandidate = "";
-                        for (let coordinate in longformat["specialRights"]){
-                            if (longformat["startingPosition"][coordinate]  && !(coordinate in runningCoordinates)){ // can only castle if unmoved in this game
-                                let coordinateVec = getCoordsFromString(coordinate);
-                                if (coordinateVec[1] == startCoords[1]){ // can only castle if same y coordinate
-                                    if ((coordinateVec[0] > startCoords[0] && xmove > 1) || (coordinateVec[0] < startCoords[0] && xmove < 1)) {
-                                        if (castleCandidate == ""){
-                                            castleCandidate = coordinateVec;
-                                        } else{
-                                            if ((xmove > 1 && castleCandidate[0] > coordinateVec[0]) || (xmove < 1 && castleCandidate[1] < coordinateVec[0])){
-                                                castleCandidate = coordinateVec;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if (castleCandidate != ""){
-                            castle["dir"] = (xmove > 1 ? 1 : -1);
-                            castle["coord"] = castleCandidate;
-                            longmove["castle"] = castle;
-                            let castleString = castleCandidate.toString();
-                            runningCoordinates[`${(parseInt(endCoords[0])-castle["dir"]).toString()},${endCoords[1].toString()}`] = `${longformat["startingPosition"][castleString]}`;
-                            runningCoordinates[castleString] = undefined;
-                        }
-                    }
-                }
-            }
-
-            // check and mate
-            if (trust_check_and_mate_symbols){
-                if (isCheck){
-                    longmove["check"] = true;
-                    if (isMate){
-                        longmove["mate"] = true;
-                    }
-                }
-            }
-            
-            longmoves.push(longmove);
-            */
         }
 
         return longmoves;
     }
 
     /**
-     * Converts a gamefile in JSON format to single position gamefile in JSON format with deleted "moves" object
-     * @param {Object} longformat - Input gamefile in JSON format
+     * Converts a gamefile in legacy JSON format to single position gamefile in JSON format with deleted "moves" object
+     * @param {Object} longformat - Input gamefile in legacy JSON format
      * @param {number} [halfmoves] - Number of halfmoves from starting position (Infinity: final position of game)
      * @param {boolean} [modify_input] - If false, a new object is created and returned. If true, the input object is modified (which is faster)
      * @returns {Object} Output gamefile in JSON format
@@ -686,8 +509,8 @@ const formatconverter = (function() {
     }
 
     /**
-     * Converts a single move in JSON format to most-compact (excludes 'x','+','#') ICN notation: 'a,b>c,dX'
-     * @param {Object} longmove - Input move in JSON format
+     * Converts a single move in legacy JSON format to most-compact (excludes 'x','+','#') ICN notation: 'a,b>c,dX'
+     * @param {Object} longmove - Input move in legacy JSON format
      * @returns {string} Output string in compact ICN notation
      */
     function LongToShort_CompactMove(longmove){
@@ -696,12 +519,12 @@ const formatconverter = (function() {
     }
 
     /**
-     * Converts a single compact move "a,b>c,dX" in ICN notation to JSON format.
+     * Converts a single compact move "a,b>c,dX" in ICN notation to legacy JSON format.
      * Doesn't reconstruct captured, enpassant, or castle flags, but DOES reconstruct promotion flag.
      * 
      * **Throws and error** if the move is in an invalid format.
      * @param {string} shortmove - Input move as string
-     * @returns {Object} Output move as JSON: { startCoords, endCoords, promotion }
+     * @returns {Object} Output move as legacy JSON: { startCoords, endCoords, promotion }
      */
     function ShortToLong_CompactMove(shortmove){
         let coords = shortmove.match(/-?[0-9]+,-?[0-9]+/g); // ['1,2','3,4']
