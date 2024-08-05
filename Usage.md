@@ -10,14 +10,16 @@ From here on, we distinguish between two notation formats:
 - The **long notation** encodes positions and games as JSONs. The example game from [README.md](README.md) in long notation is shown below.
 ```
 {"metadata":{
+    "Event": "Casual local Classical infinite chess game",
+    "Site": "https://www.infinitechess.org/",
     "Variant":"Classical",
-    "Version":"1",
+    "UTCDate": "2024.08.05",
+    "UTCTime": "01:15:47",
+    "TimeControl":"600+5",
     "White":"Tom",
     "Black":"Ben",
-    "Clock":"10+5",
-    "Date":"2024/03/17 13:42:06",
     "Result":"0-1",
-    "Condition":"Checkmate"},
+    "Termination":"Checkmate"},
 "turn":"white",
 "moveRule":"0/100",
 "fullMove":1,

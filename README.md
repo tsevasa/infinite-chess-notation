@@ -12,7 +12,7 @@ This repository includes a converter, which can transform the notation at hand i
 
 A **square** on the infinite board is uniquely identified by its coordinates which have the form `a,b` for integers `a` and `b`. Here, `a` is the x-coordinate and `b` is the y-coordinate of the piece. White pawns move in positive y-direction, while black pawns move in negative y-direction. Square `0,0` is a dark square.
 
-**Pieces** are abbreviated like in standard algebraic chess notation: `p` for pawn, `r` for rook, `n` for knight, `b` for bishop, `q` for queen and `k` for king, where capitalization implies a white piece, while lowercase letters stand for a black piece. We use the following two-letter abbreviations for the most common [fairy pieces](https://en.wikipedia.org/wiki/List_of_fairy_chess_pieces): `am` for amazon, `ha` for hawk, `ch` for chancellor, `ar` for archbishop, `gu` for guard, `ca` for camel, `gi` for giraffe, `ze` for zebra, `ce` for centaur, `rq` for royal queen, `rc` for royal centaur, `ob` for obstacle and `vo` for void.
+**Pieces** are abbreviated like in standard algebraic chess notation: `p` for pawn, `r` for rook, `n` for knight, `b` for bishop, `q` for queen and `k` for king, where capitalization implies a white piece, while lowercase letters stand for a black piece. We use the following two-letter abbreviations for the most common [fairy pieces](https://en.wikipedia.org/wiki/List_of_fairy_chess_pieces): `nr` for knightrider, `am` for amazon, `ha` for hawk, `ch` for chancellor, `ar` for archbishop, `gu` for guard, `ca` for camel, `gi` for giraffe, `ze` for zebra, `ce` for centaur, `rq` for royal queen, `rc` for royal centaur, `ob` for obstacle and `vo` for void.
 
 A **move** is identified by a starting square and end square. The universal format for a single move is given by the string `a,b>c,d`, which means that a piece moved from square `a,b` to square `c,d`. If the moved piece was a pawn that promoted to a different piece `X`, then that piece is simply appended to the end of the string, i.e. `a,b>c,dX`. For example, `3,4>3,5Q` means that a pawn promoted to a white queen, while `-2,4>-2,3n` means that a pawn promoted to a black knight.
 
@@ -64,14 +64,17 @@ As explained above, moves can either be represented as compactly as possible in 
 
 Long version:
 ```
-[Variant: Classical]
-[Version: 1]
-[White: Tom]
-[Black: Ben]
-[Clock: 10+5]
-[Date: 2024/03/17 13:42:06]
-[Result: 0-1]
-[Condition: checkmate]
+[Event "Casual local Classical infinite chess game"]
+[Site "https://www.infinitechess.org/"]
+[Variant "Classical"]
+[Round "-"]
+[UTCDate "2024.08.05"]
+[UTCTime "01:15:47"]
+[TimeControl "600+5"]
+[White "Tom"]
+[Black "Ben"]
+[Result "0-1"]
+[Termination "Checkmate"]
 
 w 0/100 1 (8;Q,R,B,N|1;q,r,b,n) checkmate {"slideLimit": 100, "cannotPassTurn": true} P1,2+|P2,2+|P3,2+|P4,2+|P5,2+|P6,2+|P7,2+|P8,2+|p1,7+|p2,7+|p3,7+|p4,7+|p5,7+|p6,7+|p7,7+|p8,7+|R1,1+|R8,1+|r1,8+|r8,8+|N2,1|N7,1|n2,8|n7,8|B3,1|B6,1|b3,8|b6,8|Q4,1|q4,8|K5,1+|k5,8+
 

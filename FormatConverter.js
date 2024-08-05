@@ -1,3 +1,14 @@
+
+/*
+ * Universal Infinite Chess Notation [Converter] and Interface
+ * by Andreas Tsevas and Naviary
+ * https://github.com/tsevasa/infinite-chess-notation
+ * 
+ * This script converts primed gamefiles from JSON notation to a
+ * compact ICN (Infinite Chess Noation) and back, still human-readable,
+ * but taking less space to describe positions.
+ */
+
 'use strict';
 
 const formatconverter = (function() {
@@ -20,9 +31,24 @@ const formatconverter = (function() {
         "centaursW": "CE", "centaursB": "ce",
         "royalQueensW": "RQ", "royalQueensB": "rq",
         "royalCentaursW": "RC", "royalCentaursB": "rc",
+        "knightridersW": "NR", "knightridersB": "nr",
         "obstaclesN": "ob",
         "voidsN": "vo"
     };
+
+    const metadata_key_ordering = [
+        "Event",
+        "Site",
+        "Variant",
+        "Round",
+        "UTCDate",
+        "UTCTime",
+        "TimeControl",
+        "White",
+        "Black",
+        "Result",
+        "Termination"
+    ];
 
     function invertDictionary(json){
         let inv = {};
@@ -70,9 +96,18 @@ const formatconverter = (function() {
     function LongToShort_Format(longformat, { compact_moves = 0, make_new_lines = true, specifyPosition = true } = {}){
         let shortformat = "";
         let whitespace = (make_new_lines ? "\n" : " ");
-        // metadata
+
+        // metadata - appended in correct order given by metadata_key_ordering
+        let metadata_keys_used = {};
+        for (let key of metadata_key_ordering){
+            if (longformat.metadata[key]){
+                shortformat += `[${key} "${longformat["metadata"][key]}"]${whitespace}`;
+                metadata_keys_used[key] = true;
+            }
+        }
+        // append the rest of the metadata
         for (let key in longformat["metadata"]){
-            if (longformat.metadata[key] != null) shortformat += `[${key}: ${longformat["metadata"][key]}]${whitespace}`;
+            if (longformat.metadata[key] && !metadata_keys_used[key]) shortformat += `[${key} "${longformat["metadata"][key]}"]${whitespace}`;
         }
         if (longformat["metadata"]) shortformat += whitespace;
 
@@ -244,9 +279,11 @@ const formatconverter = (function() {
     /**
      * Converts a string in Infinite Chess Notation to gamefile in JSON format
      * @param {string} shortformat - A string in ICN
+     * @param {boolean} [reconstruct_optional_move_flags] - Deprecated. If true, method will reconstruct "type", "captured", "enpassant" and "castle" flags of moves. Default: *true*
+     * @param {boolean} [trust_check_and_mate_symbols] - Deprecated. If true, method will set "check" and "mate" flags of moves based on + and # symbols. Default: *true*
      * @returns {Object} Equivalent gamefile in JSON format
      */
-    function ShortToLong_Format(shortformat){
+    function ShortToLong_Format(shortformat/*, reconstruct_optional_move_flags = true, trust_check_and_mate_symbols = true*/){
         let longformat = {};
         longformat.gameRules = {};
 
@@ -259,9 +296,17 @@ const formatconverter = (function() {
             let metadatastring = shortformat.slice(start_index+1,end_index);
             shortformat = `${shortformat.slice(0,start_index)}${shortformat.slice(end_index+1)}`;
             
-            let split_index = metadatastring.indexOf(": ");
-            if (split_index > -1) metadata[metadatastring.slice(0,split_index)] = metadatastring.slice(split_index+2);
-            else metadata[metadatastring] = "";
+            // new metadata format [Metadata "value"]
+            if (/^[^\s\:]*\s+\"/.test(metadatastring)){
+                let split_index = metadatastring.search(/\s\"/);
+                metadata[metadatastring.slice(0,split_index)] = metadatastring.slice(split_index+2, -1);
+            }
+            // old metadata format [Metadata: value]
+            else{
+                let split_index = metadatastring.indexOf(": ");
+                if (split_index > -1) metadata[metadatastring.slice(0,split_index)] = metadatastring.slice(split_index+2);
+                else metadata[metadatastring] = "";
+            }
         }
         longformat["metadata"] = metadata;
 
@@ -429,8 +474,8 @@ const formatconverter = (function() {
     }
 
     /**
-     * Converts a gamefile in legacy JSON format to single position gamefile in JSON format with deleted "moves" object
-     * @param {Object} longformat - Input gamefile in legacy JSON format
+     * Converts a gamefile in JSON format to single position gamefile in JSON format with deleted "moves" object
+     * @param {Object} longformat - Input gamefile in JSON format
      * @param {number} [halfmoves] - Number of halfmoves from starting position (Infinity: final position of game)
      * @param {boolean} [modify_input] - If false, a new object is created and returned. If true, the input object is modified (which is faster)
      * @returns {Object} Output gamefile in JSON format
@@ -509,8 +554,8 @@ const formatconverter = (function() {
     }
 
     /**
-     * Converts a single move in legacy JSON format to most-compact (excludes 'x','+','#') ICN notation: 'a,b>c,dX'
-     * @param {Object} longmove - Input move in legacy JSON format
+     * Converts a single move in JSON format to most-compact (excludes 'x','+','#') ICN notation: 'a,b>c,dX'
+     * @param {Object} longmove - Input move in JSON format
      * @returns {string} Output string in compact ICN notation
      */
     function LongToShort_CompactMove(longmove){
@@ -519,12 +564,12 @@ const formatconverter = (function() {
     }
 
     /**
-     * Converts a single compact move "a,b>c,dX" in ICN notation to legacy JSON format.
+     * Converts a single compact move "a,b>c,dX" in ICN notation to JSON format.
      * Doesn't reconstruct captured, enpassant, or castle flags, but DOES reconstruct promotion flag.
      * 
      * **Throws and error** if the move is in an invalid format.
      * @param {string} shortmove - Input move as string
-     * @returns {Object} Output move as legacy JSON: { startCoords, endCoords, promotion }
+     * @returns {Object} Output move as JSON: { startCoords, endCoords, promotion }
      */
     function ShortToLong_CompactMove(shortmove){
         let coords = shortmove.match(/-?[0-9]+,-?[0-9]+/g); // ['1,2','3,4']
@@ -571,7 +616,7 @@ const formatconverter = (function() {
     /**
      * Accepts a gamefile's starting position, pawnDoublePush and castleWith gamerules, returns the position in compressed notation (.e.g., "P5,6+|k15,-56|Q5000,1")
      * @param {Object} position - The starting position of the gamefile, in the form 'x,y':'pawnsW'
-     * @param {boolean} pawnDoublePush - Whether or not pawns are allowed to double push
+     * @param {boolean} pawnDoublePush - Whether pawns are allowed to double push
      * @param {string | undefined} castleWith - If castling is allowed, this is what piece the king can castle with (e.g., "rooks"),
      * @returns {string} The position of the game in compressed form, where each piece with a + has its special move ability
      */
@@ -586,7 +631,7 @@ const formatconverter = (function() {
      * 
      * This can be manually used to compress the starting position of variants of InfiniteChess.org to shrink the size of the code
      * @param {Object} position - The starting position of the gamefile, in the form 'x,y':'pawnsW'
-     * @param {boolean} pawnDoublePush - Whether or not pawns are allowed to double push
+     * @param {boolean} pawnDoublePush - Whether pawns are allowed to double push
      * @param {string | undefined} castleWith - If castling is allowed, this is what piece the king can castle with (e.g., "rooks"), otherwise leave it undefined
      * @returns {Object} The specialRights gamefile property, in the form 'x,y':true, where true means the piece at that location has their special move ability (pawn double push, castling rights..)
      */
@@ -736,7 +781,7 @@ const formatconverter = (function() {
     try{
         // Example game converted from long to short format in three different levels of move compactness
         const gameExample = 
-        {"metadata":{"Variant":"Classical","Version":"1","White":"Tom","Black":"Ben","Clock":"10+5","Date":"2024/03/17 13:42:06","Result":"0-1","Condition":"checkmate"},"turn":"white","moveRule":"0/100","fullMove":1,"gameRules":{"slideLimit":16,"promotionRanks":[8,1],"promotionsAllowed":{"white":["queens","rooks","bishops","knights"],"black":["queens","rooks","bishops","knights"]},"ovenTemperature": 350,"winConditions":{"white":["checkmate"],"black":["checkmate"]}},"specialRights":{"1,2":true,"2,2":true,"3,2":true,"4,2":true,"5,2":true,"6,2":true,"7,2":true,"8,2":true,"1,7":true,"2,7":true,"3,7":true,"4,7":true,"5,7":true,"6,7":true,"7,7":true,"8,7":true,"1,1":true,"5,1":true,"8,1":true,"1,8":true,"5,8":true,"8,8":true},"startingPosition":{"1,2":"pawnsW","2,2":"pawnsW","3,2":"pawnsW","4,2":"pawnsW","5,2":"pawnsW","6,2":"pawnsW","7,2":"pawnsW","8,2":"pawnsW","1,7":"pawnsB","2,7":"pawnsB","3,7":"pawnsB","4,7":"pawnsB","5,7":"pawnsB","6,7":"pawnsB","7,7":"pawnsB","8,7":"pawnsB","1,1":"rooksW","8,1":"rooksW","1,8":"rooksB","8,8":"rooksB","2,1":"knightsW","7,1":"knightsW","2,8":"knightsB","7,8":"knightsB","3,1":"bishopsW","6,1":"bishopsW","3,8":"bishopsB","6,8":"bishopsB","4,1":"queensW","4,8":"queensB","5,1":"kingsW","5,8":"kingsB"},"moves":[{"type":"pawnsW","startCoords":[4,2],"endCoords":[4,4]},{"type":"pawnsB","startCoords":[4,7],"endCoords":[4,6]},{"type":"pawnsW","startCoords":[4,4],"endCoords":[4,5]},{"type":"pawnsB","startCoords":[3,7],"endCoords":[3,5]},{"type":"pawnsW","startCoords":[4,5],"endCoords":[3,6],"captured":"pawnsB","enpassant":-1},{"type":"bishopsB","startCoords":[6,8],"endCoords":[3,11]},{"type":"pawnsW","startCoords":[3,6],"endCoords":[2,7],"captured":"pawnsB"},{"type":"bishopsB","startCoords":[3,11],"endCoords":[-4,4]},{"type":"pawnsW","startCoords":[2,7],"endCoords":[1,8],"captured":"rooksB","promotion":"queensW"},{"type":"bishopsB","startCoords":[-4,4],"endCoords":[2,-2],"check":true},{"type":"kingsW","startCoords":[5,1],"endCoords":[4,2]},{"type":"knightsB","startCoords":[7,8],"endCoords":[6,6]},{"type":"queensW","startCoords":[1,8],"endCoords":[2,8],"captured":"knightsB"},{"type":"kingsB","startCoords":[5,8],"endCoords":[7,8],"castle":{"dir":1,"coord":[8,8]}},{"type":"queensW","startCoords":[2,8],"endCoords":[1,7],"captured":"pawnsB"},{"type":"queensB","startCoords":[4,8],"endCoords":[0,4]},{"type":"queensW","startCoords":[1,7],"endCoords":[7,13],"check":true},{"type":"kingsB","startCoords":[7,8],"endCoords":[8,8]},{"type":"queensW","startCoords":[7,13],"endCoords":[7,7],"captured":"pawnsB","check":true},{"type":"kingsB","startCoords":[8,8],"endCoords":[7,7],"captured":"queensW"},{"type":"pawnsW","startCoords":[8,2],"endCoords":[8,4]},{"type":"queensB","startCoords":[0,4],"endCoords":[4,4],"check":true,"mate":true}]}
+        {"metadata":{"Variant":"Classical","Version":"1","White":"Tom","Black":"Ben","TimeControl":"10+5","Date":"2024/03/17 13:42:06","Result":"0-1","Condition":"checkmate"},"turn":"white","moveRule":"0/100","fullMove":1,"gameRules":{"slideLimit":16,"promotionRanks":[8,1],"promotionsAllowed":{"white":["queens","rooks","bishops","knights"],"black":["queens","rooks","bishops","knights"]},"ovenTemperature": 350,"winConditions":{"white":["checkmate"],"black":["checkmate"]}},"specialRights":{"1,2":true,"2,2":true,"3,2":true,"4,2":true,"5,2":true,"6,2":true,"7,2":true,"8,2":true,"1,7":true,"2,7":true,"3,7":true,"4,7":true,"5,7":true,"6,7":true,"7,7":true,"8,7":true,"1,1":true,"5,1":true,"8,1":true,"1,8":true,"5,8":true,"8,8":true},"startingPosition":{"1,2":"pawnsW","2,2":"pawnsW","3,2":"pawnsW","4,2":"pawnsW","5,2":"pawnsW","6,2":"pawnsW","7,2":"pawnsW","8,2":"pawnsW","1,7":"pawnsB","2,7":"pawnsB","3,7":"pawnsB","4,7":"pawnsB","5,7":"pawnsB","6,7":"pawnsB","7,7":"pawnsB","8,7":"pawnsB","1,1":"rooksW","8,1":"rooksW","1,8":"rooksB","8,8":"rooksB","2,1":"knightsW","7,1":"knightsW","2,8":"knightsB","7,8":"knightsB","3,1":"bishopsW","6,1":"bishopsW","3,8":"bishopsB","6,8":"bishopsB","4,1":"queensW","4,8":"queensB","5,1":"kingsW","5,8":"kingsB"},"moves":[{"type":"pawnsW","startCoords":[4,2],"endCoords":[4,4]},{"type":"pawnsB","startCoords":[4,7],"endCoords":[4,6]},{"type":"pawnsW","startCoords":[4,4],"endCoords":[4,5]},{"type":"pawnsB","startCoords":[3,7],"endCoords":[3,5]},{"type":"pawnsW","startCoords":[4,5],"endCoords":[3,6],"captured":"pawnsB","enpassant":-1},{"type":"bishopsB","startCoords":[6,8],"endCoords":[3,11]},{"type":"pawnsW","startCoords":[3,6],"endCoords":[2,7],"captured":"pawnsB"},{"type":"bishopsB","startCoords":[3,11],"endCoords":[-4,4]},{"type":"pawnsW","startCoords":[2,7],"endCoords":[1,8],"captured":"rooksB","promotion":"queensW"},{"type":"bishopsB","startCoords":[-4,4],"endCoords":[2,-2],"check":true},{"type":"kingsW","startCoords":[5,1],"endCoords":[4,2]},{"type":"knightsB","startCoords":[7,8],"endCoords":[6,6]},{"type":"queensW","startCoords":[1,8],"endCoords":[2,8],"captured":"knightsB"},{"type":"kingsB","startCoords":[5,8],"endCoords":[7,8],"castle":{"dir":1,"coord":[8,8]}},{"type":"queensW","startCoords":[2,8],"endCoords":[1,7],"captured":"pawnsB"},{"type":"queensB","startCoords":[4,8],"endCoords":[0,4]},{"type":"queensW","startCoords":[1,7],"endCoords":[7,13],"check":true},{"type":"kingsB","startCoords":[7,8],"endCoords":[8,8]},{"type":"queensW","startCoords":[7,13],"endCoords":[7,7],"captured":"pawnsB","check":true},{"type":"kingsB","startCoords":[8,8],"endCoords":[7,7],"captured":"queensW"},{"type":"pawnsW","startCoords":[8,2],"endCoords":[8,4]},{"type":"queensB","startCoords":[0,4],"endCoords":[4,4],"check":true,"mate":true}]}
         const outputNice = LongToShort_Format(gameExample);
         console.log("Game in short format with nice moves:\n\n" + outputNice + "\n");
         const outputMoreCompact = LongToShort_Format(gameExample, { compact_moves: 1 });
@@ -777,7 +822,7 @@ const formatconverter = (function() {
         console.log(`\n\nCompressing of a variant's starting position example:\n\n${JSON.stringify(b)}`)
 
         // Speed test, put large position in "longposition.txt"
-        const fs = require('fs'); // supported in NodeJS
+        const fs = require('fs'); // supported in Node.js
         fs.readFile("longposition.txt", (err, data) => {
             if (err) return;
             const gameExampleLong = JSON.parse(data);
