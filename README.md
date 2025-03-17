@@ -4,10 +4,6 @@ This is an attempt to standardize the notation around [infinite chess](https://e
 
 In the [mathematical literature on infinite chess](https://www.emis.de/journals/INTEGERS/papers/og2/og2.pdf), the concepts of double pawn moves, promotion, en passant, castling and the fifty-move rule are often discarded. However, many popular variants of [infinite chess played by humans](https://www.infinitechess.org/) feature all these rules, next to fairy pieces and further unorthodox game modes. With this dichotomy in mind, the notation at hand was explicitly developed with the aim of covering all possible rule combinations. This is achieved by allowing for all sorts of optional arguments at the start of a position string, modifying the implied game rules if included.
 
-## Included converter
-
-This repository includes a converter, which can transform the notation at hand into a JSON format more suitable for computer processing, along with some other useful general purpose functions. For information on how to use the program and that JSON format, check [Usage.md](Usage.md).
-
 ## Coordinates, Pieces and Moves
 
 A **square** on the infinite board is uniquely identified by its coordinates which have the form `a,b` for integers `a` and `b`. Here, `a` is the x-coordinate and `b` is the y-coordinate of the piece. White pawns move in positive y-direction, while black pawns move in negative y-direction. Square `0,0` is a dark square.
@@ -101,3 +97,7 @@ The position just before the final move by Black looks like this:
 ```
 b 8,3 0/100 11 (8|1) {"slideLimit": 100} P1,2+|P2,2+|P3,2+|P5,2+|P6,2+|P7,2+|p5,7+|p6,7+|k7,7|p8,7+|R1,1+|R8,1+|N2,1|N7,1|B3,1|B6,1|b3,8|Q4,1|p4,6|b2,-2|K4,2|n6,6|r6,8|q0,4|P8,4
 ```
+
+## Included converter
+
+This repository includes a converter, which can transform the notation at hand into a JSON format more suitable for computer processing, along with some other useful general purpose functions. For information on how to use the program and that JSON format, check [Usage.md](Usage.md). Note that the converter is being actively developed on the [Infinite Chess Repository](https://github.com/Infinite-Chess/infinitechess.org) nowadays and will no longer be updated on this repository.
