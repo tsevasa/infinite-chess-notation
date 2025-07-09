@@ -38,7 +38,6 @@ Now we explain the long list of optional arguments that can be added in front of
 - A single nonnegative integer `N` determines the fullmove counter of the current position. It starts at `1` in every game and gets incremented after every black move. If omitted, it is assumed to be `1`.
 - An entry of the form `(8;Q,R,N|1;n,b,am)` determines the promotion ranks of the current position for the two players, separated by `|`. In this example, White may promote any pawn reaching y-coordinate 8 to a queen, rook or knight, while Black may promote any pawn reaching y-coordinate 1 to a knight, bishop or amazon. If the pieces for a given player are omitted, e.g. `(3|-4;q,r)`, then he may promote to the usual choice of queen, rook, bishop or knight. If the entry of a player is omitted entirely, e.g. `(|-4;q)`, then he has no promotion rank. If this entire argument is omitted, there are no promotion ranks for either player.
 - There is an optional win condition argument, which is `checkmate` by default. It can be changed to completely overhaul the goal of the players in the game, e.g. to `allpiecescaptured` or `threecheck`. An argument of the form `(checkmate|checkmate,allpiecescaptured)` allows for multiple different win conditions for the two players. In this example, White can win by checkmating Black, while Black can win by either checkmate or allpiecescaptured.
-- Any additional optional properties of the position can be included in JSON format in { } brackets in the form `{"slideLimit": 7, "cannotPassTurn": true}`.
 
 In total, the classical starting position of normal chess embedded into the infinite board with the same rules as finite chess takes the form
 ```
@@ -72,7 +71,7 @@ Long version:
 [Result "0-1"]
 [Termination "Checkmate"]
 
-w 0/100 1 (8;Q,R,B,N|1;q,r,b,n) checkmate {"slideLimit": 100, "cannotPassTurn": true} P1,2+|P2,2+|P3,2+|P4,2+|P5,2+|P6,2+|P7,2+|P8,2+|p1,7+|p2,7+|p3,7+|p4,7+|p5,7+|p6,7+|p7,7+|p8,7+|R1,1+|R8,1+|r1,8+|r8,8+|N2,1|N7,1|n2,8|n7,8|B3,1|B6,1|b3,8|b6,8|Q4,1|q4,8|K5,1+|k5,8+
+w 0/100 1 (8;Q,R,B,N|1;q,r,b,n) checkmate P1,2+|P2,2+|P3,2+|P4,2+|P5,2+|P6,2+|P7,2+|P8,2+|p1,7+|p2,7+|p3,7+|p4,7+|p5,7+|p6,7+|p7,7+|p8,7+|R1,1+|R8,1+|r1,8+|r8,8+|N2,1|N7,1|n2,8|n7,8|B3,1|B6,1|b3,8|b6,8|Q4,1|q4,8|K5,1+|k5,8+
 
 1. P4,2 > 4,4  | p4,7 > 4,6
 2. P4,4 > 4,5  | p3,7 > 3,5
@@ -89,15 +88,15 @@ w 0/100 1 (8;Q,R,B,N|1;q,r,b,n) checkmate {"slideLimit": 100, "cannotPassTurn": 
 
 Compact version:
 ```
-0/100 (8|1) {"slideLimit": 100} P1,2+|P2,2+|P3,2+|P4,2+|P5,2+|P6,2+|P7,2+|P8,2+|p1,7+|p2,7+|p3,7+|p4,7+|p5,7+|p6,7+|p7,7+|p8,7+|R1,1+|R8,1+|r1,8+|r8,8+|N2,1|N7,1|n2,8|n7,8|B3,1|B6,1|b3,8|b6,8|Q4,1|q4,8|K5,1+|k5,8+
+0/100 (8|1) P1,2+|P2,2+|P3,2+|P4,2+|P5,2+|P6,2+|P7,2+|P8,2+|p1,7+|p2,7+|p3,7+|p4,7+|p5,7+|p6,7+|p7,7+|p8,7+|R1,1+|R8,1+|r1,8+|r8,8+|N2,1|N7,1|n2,8|n7,8|B3,1|B6,1|b3,8|b6,8|Q4,1|q4,8|K5,1+|k5,8+
 4,2>4,4|4,7>4,6|4,4>4,5|3,7>3,5|4,5>3,6|6,8>3,11|3,6>2,7|3,11>-4,4|2,7>1,8Q|-4,4>2,-2|5,1>4,2|7,8>6,6|1,8>2,8|5,8>7,8|2,8>1,7|4,8>0,4|1,7>7,13|7,8>8,8|7,13>7,7|8,8>7,7|8,2>8,4|0,4>4,4
 ```
 
 The position just before the final move by Black looks like this:
 ```
-b 8,3 0/100 11 (8|1) {"slideLimit": 100} P1,2+|P2,2+|P3,2+|P5,2+|P6,2+|P7,2+|p5,7+|p6,7+|k7,7|p8,7+|R1,1+|R8,1+|N2,1|N7,1|B3,1|B6,1|b3,8|Q4,1|p4,6|b2,-2|K4,2|n6,6|r6,8|q0,4|P8,4
+b 8,3 0/100 11 (8|1) P1,2+|P2,2+|P3,2+|P5,2+|P6,2+|P7,2+|p5,7+|p6,7+|k7,7|p8,7+|R1,1+|R8,1+|N2,1|N7,1|B3,1|B6,1|b3,8|Q4,1|p4,6|b2,-2|K4,2|n6,6|r6,8|q0,4|P8,4
 ```
 
-## Included converter
+## DEPRECATED: Included converter
 
-This repository includes a converter, which can transform the notation at hand into a JSON format more suitable for computer processing, along with some other useful general purpose functions. For information on how to use the program and that JSON format, check [Usage.md](Usage.md). Note that the converter is being actively developed on the [Infinite Chess Repository](https://github.com/Infinite-Chess/infinitechess.org) nowadays and will no longer be updated on this repository.
+This repository includes a converter, which can transform the notation at hand into a JSON format more suitable for computer processing, along with some other useful general purpose functions. For information on how to use the program and that JSON format, check [Usage.md](Usage.md). Note that the converter is being actively developed on the [Infinite Chess Repository](https://github.com/Infinite-Chess/infinitechess.org) nowadays and will no longer be updated or maintained on this repository.

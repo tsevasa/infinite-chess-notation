@@ -1,6 +1,6 @@
-# Usage of FormatConverter.js
+# DEPRECATED: Usage of FormatConverter.js
 
-The [program](FormatConverter.js) is written in javascript in order to allow for easy embedding into web applications. To run it locally on your computer after downloading, use Node.js for example.
+The [program](FormatConverter.js) is written in javascript in order to allow for easy embedding into web applications. To run it locally on your computer after downloading, use Node.js for example. Note that it is being actively developed on the [Infinite Chess Repository](https://github.com/Infinite-Chess/infinitechess.org) nowadays and will no longer be updated or maintained on this repository.
 
 It provides some useful general purpose methods for handling infinite chess games and for transforming the infinite chess notation discussed in [README.md](README.md) into a JSON format, which is more suitable for computer processing.
 
@@ -26,9 +26,8 @@ From here on, we distinguish between two notation formats:
 "gameRules":{
     "promotionRanks":[8,1],
     "promotionsAllowed":{"white":["queens","rooks","bishops","knights"],"black":["queens","rooks","bishops","knights"]},
-    "winConditions":{"white":["checkmate"],"black":["checkmate"]},
-    "slideLimit": 100,
-    "cannotPassTurn": true},
+    "winConditions":{"white":["checkmate"],"black":["checkmate"]}
+    },
 "specialRights":{"1,2":true,"2,2":true,"3,2":true,"4,2":true,"5,2":true,"6,2":true,"7,2":true,"8,2":true,"1,7":true,"2,7":true,"3,7":true,"4,7":true,"5,7":true,"6,7":true,"7,7":true,"8,7":true,"1,1":true,"8,1":true,"1,8":true,"8,8":true,"5,1":true,"5,8":true},
 "startingPosition":{"1,2":"pawnsW","2,2":"pawnsW","3,2":"pawnsW","4,2":"pawnsW","5,2":"pawnsW","6,2":"pawnsW","7,2":"pawnsW","8,2":"pawnsW","1,7":"pawnsB","2,7":"pawnsB","3,7":"pawnsB","4,7":"pawnsB","5,7":"pawnsB","6,7":"pawnsB","7,7":"pawnsB","8,7":"pawnsB","1,1":"rooksW","8,1":"rooksW","1,8":"rooksB","8,8":"rooksB","2,1":"knightsW","7,1":"knightsW","2,8":"knightsB","7,8":"knightsB","3,1":"bishopsW","6,1":"bishopsW","3,8":"bishopsB","6,8":"bishopsB","4,1":"queensW","4,8":"queensB","5,1":"kingsW","5,8":"kingsB"},
 "moves":["4,2>4,4", "4,7>4,6", "4,4>4,5", "3,7>3,5", "4,5>3,6", "6,8>3,11", "3,6>2,7", "3,11>-4,4", "2,7>1,8Q", "-4,4>2,-2,", "5,1>4,2", "7,8>6,6", "1,8>2,8", "5,8>7,8", "2,8>1,7", "4,8>0,4", "1,7>7,13", "7,8>8,8", "7,13>7,7", "8,8>7,7", "8,2>8,4", "0,4>4,4"]}
@@ -45,7 +44,7 @@ At the start of the program, you can find the piece name dictionary containing a
 
 At the end of the program, you can find some example uses of these functions, which were used to generate the game in [README.md](README.md).
 
-## DEPRECATED: Old legacy format for "moves" entry
+## Old legacy format for "moves" entry
 In the example above, `"moves"` gives the list of moves as a simple list of moves in short notation. However, for backwards compatibility reasons, `LongToShort_Format()` also still supports the old legacy format below as an input:
 ```
 {"moves":[
